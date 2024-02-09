@@ -163,6 +163,9 @@ export async function index(options: {
       before: indexStartDt,
       limit: cleanupBatchSize,
     }))) {
+      if (!uidsToDelete.length) {
+        break;
+      }
       // First delete from vector store.
       await vectorStore.delete(uidsToDelete);
       // Then delete from record manager.

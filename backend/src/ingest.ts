@@ -41,25 +41,18 @@ async function loadAPIDocs(): Promise<Array<DocumentInterface>> {
  * @returns {Promise<Array<DocumentInterface>>}
  */
 async function loadLangChainDocs(): Promise<Array<DocumentInterface>> {
+  // const regexFailIfNotJsLangChain = /^(?!https:\/\/js\.langchain\.com).*/;
+  // const regexContainsToolsDynamic = /tools\/dynamic/;
+
+  // Filter our 1 bad url (has since been fixed in vercel, but keep the test!)
   const loader = new SitemapLoader("https://js.langchain.com/", {
-    filterUrls: ["https://js.langchain.com/"]
+    // filterUrls: [regexFailIfNotJsLangChain, regexContainsToolsDynamic],
   });
   return loader.load();
 }
 
 function getEmbeddingsModel(): Embeddings {
   return new OpenAIEmbeddings()
-}
-
-const POSTGRES_CONNECTION_OPTIONS = {
-  postgresConnectionOptions: {
-    type: "postgres",
-    host: "127.0.0.1",
-    port: 5432,
-    user: "myuser",
-    password: "ChangeMe",
-    database: "api",
-  },
 }
 
 async function ingestDocs() {
@@ -73,6 +66,10 @@ async function ingestDocs() {
   console.debug(`Loaded ${apiDocs.length} docs from API`)
   const langchainDocs = await loadLangChainDocs();
   console.debug(`Loaded ${langchainDocs.length} docs from documentation`);
+
+  if (!smithDocs.length || !apiDocs.length || !langchainDocs.length) {
+    process.exit(1);
+  }
 
   const textSplitter = new RecursiveCharacterTextSplitter({ chunkOverlap: 200, chunkSize: 4000 });
   const docsTransformed = await textSplitter.splitDocuments([
@@ -106,7 +103,15 @@ async function ingestDocs() {
     indexName: WEAVIATE_DOCS_INDEX_NAME,
     textKey: "text",
   });
-  const recordManager = new PostgresRecordManager(`weaviate/${WEAVIATE_DOCS_INDEX_NAME}`, POSTGRES_CONNECTION_OPTIONS);
+  const recordManager = new PostgresRecordManager(`weaviate/${WEAVIATE_DOCS_INDEX_NAME}`, {
+    postgresConnectionOptions: {
+      host: process.env.DATABASE_HOST,
+      port: Number(process.env.DATABASE_PORT),
+      user: process.env.DATABASE_USERNAME,
+      password: process.env.DATABASE_PASSWORD,
+      database: process.env.DATABASE_NAME,
+    },
+  });
   await recordManager.createSchema();
 
   const indexingStats = await index({
@@ -118,13 +123,14 @@ async function ingestDocs() {
     forceUpdate: process.env.FORCE_UPDATE === "true",
   })
 
-  // load index
-  // query weaviateClient for num of vectors and log!
   console.log({
     indexingStats,
   }, "Indexing stats");
-  const numVecs = await weaviateClient.misc.metaGetter().do();
-  console.log(`Bruh what is dis?:\n\n${JSON.stringify(numVecs, null, 2)}`);
+
+  const nodeStatus = await weaviateClient.cluster.nodesStatusGetter().do();
+  let numVecs = 0;
+  nodeStatus.nodes?.forEach((node) => numVecs += (node.stats?.objectCount ?? 0))
+  console.log(`LangChain now has this many vectors: ${numVecs}`);
 }
 
 ingestDocs()
