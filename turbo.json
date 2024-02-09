@@ -1,0 +1,27 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": ["**/.env"],
+  "pipeline": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["**/dist/**"],
+      "inputs": ["**/src/**"]
+    },
+    "lint": {
+      "dependsOn": ["^lint"],
+      "inputs": ["**/src/**"]
+    },
+    "format": {
+      "dependsOn": ["^format"],
+      "inputs": ["**/src/**"]
+    },
+    "start": {
+      "dependsOn": ["^start"],
+      "inputs": ["**/src/**"]
+    },
+    "dev": {
+      "dependsOn": ["^dev"],
+      "inputs": ["**/src/**"]
+    }
+  }
+}

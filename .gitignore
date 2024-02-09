@@ -6,6 +6,10 @@ __pycache__/
 # C extensions
 *.so
 
+.env.local
+.env
+.yarn/cache/**
+
 # Distribution / packaging
 .Python
 build/
