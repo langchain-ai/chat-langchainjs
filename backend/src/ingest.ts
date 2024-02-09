@@ -1,3 +1,4 @@
+/* eslint-disable no-process-env */
 import weaviate, { ApiKey, WeaviateClient } from "weaviate-ts-client";
 import { DocumentInterface } from "@langchain/core/documents";
 import { RecursiveUrlLoader } from "langchain/document_loaders/web/recursive_url";
@@ -5,10 +6,10 @@ import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { OpenAIEmbeddings } from "@langchain/openai";
 import { Embeddings } from "@langchain/core/embeddings";
 import { WeaviateStore } from "@langchain/weaviate";
-import { WEAVIATE_DOCS_INDEX_NAME } from "./constants.js";
 import { PostgresRecordManager } from "@langchain/community/indexes/postgres";
-import { index } from "./_index.js";
 import { SitemapLoader } from "langchain/document_loaders/web/sitemap";
+import { WEAVIATE_DOCS_INDEX_NAME } from "./constants.js";
+import { index } from "./_index.js";
 
 /**
  * Load all of the LangSmith documentation via the
@@ -29,10 +30,13 @@ async function loadLangSmithDocs(): Promise<Array<DocumentInterface>> {
  * @returns {Promise<Array<DocumentInterface>>}
  */
 async function loadAPIDocs(): Promise<Array<DocumentInterface>> {
-  const loader = new RecursiveUrlLoader("https://api.js.langchain.com/index.html/", {
-    maxDepth: 8,
-    timeout: 600,
-  });
+  const loader = new RecursiveUrlLoader(
+    "https://api.js.langchain.com/index.html/",
+    {
+      maxDepth: 8,
+      timeout: 600,
+    }
+  );
   return loader.load();
 }
 
@@ -52,18 +56,20 @@ async function loadLangChainDocs(): Promise<Array<DocumentInterface>> {
 }
 
 function getEmbeddingsModel(): Embeddings {
-  return new OpenAIEmbeddings()
+  return new OpenAIEmbeddings();
 }
 
 async function ingestDocs() {
   if (!process.env.WEAVIATE_API_KEY || !process.env.WEAVIATE_HOST) {
-    throw new Error("WEAVIATE_API_KEY and WEAVIATE_HOST must be set in the environment");
+    throw new Error(
+      "WEAVIATE_API_KEY and WEAVIATE_HOST must be set in the environment"
+    );
   }
 
   const smithDocs = await loadLangSmithDocs();
-  console.debug(`Loaded ${smithDocs.length} docs from LangSmith`)
+  console.debug(`Loaded ${smithDocs.length} docs from LangSmith`);
   const apiDocs = await loadAPIDocs();
-  console.debug(`Loaded ${apiDocs.length} docs from API`)
+  console.debug(`Loaded ${apiDocs.length} docs from API`);
   const langchainDocs = await loadLangChainDocs();
   console.debug(`Loaded ${langchainDocs.length} docs from documentation`);
 
@@ -71,7 +77,10 @@ async function ingestDocs() {
     process.exit(1);
   }
 
-  const textSplitter = new RecursiveCharacterTextSplitter({ chunkOverlap: 200, chunkSize: 4000 });
+  const textSplitter = new RecursiveCharacterTextSplitter({
+    chunkOverlap: 200,
+    chunkSize: 4000,
+  });
   const docsTransformed = await textSplitter.splitDocuments([
     ...smithDocs,
     ...apiDocs,
@@ -90,12 +99,13 @@ async function ingestDocs() {
       doc.metadata.title = "";
     }
   }
-  
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const weaviateClient = (weaviate as any).client({
     scheme: "https",
     host: process.env.WEAVIATE_HOST,
-    apiKey: new ApiKey(process.env.WEAVIATE_API_KEY)
-  }) as WeaviateClient
+    apiKey: new ApiKey(process.env.WEAVIATE_API_KEY),
+  }) as WeaviateClient;
 
   const embeddings = getEmbeddingsModel();
   const vectorStore = new WeaviateStore(embeddings, {
@@ -103,15 +113,18 @@ async function ingestDocs() {
     indexName: WEAVIATE_DOCS_INDEX_NAME,
     textKey: "text",
   });
-  const recordManager = new PostgresRecordManager(`weaviate/${WEAVIATE_DOCS_INDEX_NAME}`, {
-    postgresConnectionOptions: {
-      host: process.env.DATABASE_HOST,
-      port: Number(process.env.DATABASE_PORT),
-      user: process.env.DATABASE_USERNAME,
-      password: process.env.DATABASE_PASSWORD,
-      database: process.env.DATABASE_NAME,
-    },
-  });
+  const recordManager = new PostgresRecordManager(
+    `weaviate/${WEAVIATE_DOCS_INDEX_NAME}`,
+    {
+      postgresConnectionOptions: {
+        host: process.env.DATABASE_HOST,
+        port: Number(process.env.DATABASE_PORT),
+        user: process.env.DATABASE_USERNAME,
+        password: process.env.DATABASE_PASSWORD,
+        database: process.env.DATABASE_NAME,
+      },
+    }
+  );
   await recordManager.createSchema();
 
   const indexingStats = await index({
@@ -121,21 +134,25 @@ async function ingestDocs() {
     cleanup: "full",
     sourceIdKey: "source",
     forceUpdate: process.env.FORCE_UPDATE === "true",
-  })
+  });
 
-  console.log({
-    indexingStats,
-  }, "Indexing stats");
+  console.log(
+    {
+      indexingStats,
+    },
+    "Indexing stats"
+  );
 
   const nodeStatus = await weaviateClient.cluster.nodesStatusGetter().do();
   let numVecs = 0;
-  nodeStatus.nodes?.forEach((node) => numVecs += (node.stats?.objectCount ?? 0))
+  nodeStatus.nodes?.forEach((node) => {
+    numVecs += node.stats?.objectCount ?? 0;
+  });
   console.log(`LangChain now has this many vectors: ${numVecs}`);
 }
 
-ingestDocs()
-  .catch((e) => {
-    console.error("Failed to ingest docs");
-    console.error(e);
-    process.exit(1);
-  });
+ingestDocs().catch((e) => {
+  console.error("Failed to ingest docs");
+  console.error(e);
+  process.exit(1);
+});

@@ -2,7 +2,12 @@ import { RecordManagerInterface } from "@langchain/community/indexes/base";
 import { DocumentInterface } from "@langchain/core/documents";
 import { VectorStore } from "@langchain/core/vectorstores";
 import { BaseDocumentLoader } from "langchain/document_loaders/base";
-import { _HashedDocument, _batch, _deduplicateInOrder, _getSourceIdAssigner } from "langchain/indexes";
+import {
+  _HashedDocument,
+  _batch,
+  _deduplicateInOrder,
+  _getSourceIdAssigner,
+} from "langchain/indexes";
 
 const DEFAULTS = {
   batchSize: 100,
@@ -11,23 +16,23 @@ const DEFAULTS = {
 };
 
 export async function index(options: {
-  docsSource: BaseDocumentLoader | Array<DocumentInterface>,
-  recordManager: RecordManagerInterface,
-  vectorStore: VectorStore,
+  docsSource: BaseDocumentLoader | Array<DocumentInterface>;
+  recordManager: RecordManagerInterface;
+  vectorStore: VectorStore;
   /**
    * @default 100
    */
-  batchSize?: number,
-  cleanup?: "incremental" | "full",
-  sourceIdKey: string | ((doc: DocumentInterface) => string),
+  batchSize?: number;
+  cleanup?: "incremental" | "full";
+  sourceIdKey: string | ((doc: DocumentInterface) => string);
   /**
    * @default {1000}
    */
-  cleanupBatchSize?: number,
+  cleanupBatchSize?: number;
   /**
    * @default false
    */
-  forceUpdate?: boolean,
+  forceUpdate?: boolean;
 }): Promise<{
   numAdded: number;
   numSkipped: number;
@@ -45,7 +50,9 @@ export async function index(options: {
   } = { ...DEFAULTS, ...options };
 
   if (cleanup === "incremental" && !sourceIdKey) {
-    throw new Error("Source id key is required when cleanup mode is incremental.");
+    throw new Error(
+      "Source id key is required when cleanup mode is incremental."
+    );
   }
 
   let docs: Array<DocumentInterface>;
@@ -53,7 +60,7 @@ export async function index(options: {
     try {
       docs = await docsSource.load();
     } catch (e) {
-      throw new Error("Error loading documents from source" + e);
+      throw new Error(`Error loading documents from source${e}`);
     }
   } else {
     docs = docsSource;
@@ -62,26 +69,29 @@ export async function index(options: {
   const sourceIdAssigner = _getSourceIdAssigner(sourceIdKey);
 
   // Mark when the update started.
-  const indexStartDt = await recordManager.getTime()
-  let numAdded = 0
-  let numSkipped = 0
-  let numDeleted = 0
+  const indexStartDt = await recordManager.getTime();
+  let numAdded = 0;
+  let numSkipped = 0;
+  let numDeleted = 0;
 
   for (const docBatch of _batch(batchSize, docs)) {
     const hashedDocs = _deduplicateInOrder(
-      docBatch.map(doc => _HashedDocument.fromDocument(doc))
+      docBatch.map((doc) => _HashedDocument.fromDocument(doc))
     );
 
     let sourceIds = hashedDocs.map(sourceIdAssigner);
 
     if (cleanup === "incremental") {
       // If the cleanup mode is incremental, source ids are required.
-      for (let i = 0; i < sourceIds.length; i++) {
+      for (let i = 0; i < sourceIds.length; i += 1) {
         const sourceId = sourceIds[i];
         const hashedDoc = hashedDocs[i];
         if (sourceId === null) {
           throw new Error(
-            `Source ids are required when cleanup mode is incremental.\nDocument that starts with content: ${hashedDoc.pageContent.substring(0, 100)} was not assigned as source id.`
+            `Source ids are required when cleanup mode is incremental.\nDocument that starts with content: ${hashedDoc.pageContent.substring(
+              0,
+              100
+            )} was not assigned as source id.`
           );
         }
       }
@@ -89,14 +99,16 @@ export async function index(options: {
       sourceIds = sourceIds as Array<string>;
     }
 
-    const existsBatch = await recordManager.exists(hashedDocs.map(({ uid }) => uid));
-    
+    const existsBatch = await recordManager.exists(
+      hashedDocs.map(({ uid }) => uid)
+    );
+
     // Filter out documents that already exist in the record store.
     const uids: Array<string> = [];
     const docsToIndex: Array<DocumentInterface> = [];
     const uidsToRefresh: Array<string> = [];
 
-    for (let i = 0; i < hashedDocs.length; i++) {
+    for (let i = 0; i < hashedDocs.length; i += 1) {
       const hashedDoc = hashedDocs[i];
       const docExists = existsBatch[i];
       if (docExists && !forceUpdate) {
@@ -109,7 +121,7 @@ export async function index(options: {
 
     // Update refresh timestamp
     if (uidsToRefresh.length) {
-      recordManager.update(uidsToRefresh, { timeAtLeast: indexStartDt });
+      await recordManager.update(uidsToRefresh, { timeAtLeast: indexStartDt });
       numSkipped += uidsToRefresh.length;
     }
 
@@ -123,10 +135,13 @@ export async function index(options: {
     // And only then update the record store.
     // Update ALL records, even if they already exist since we want to refresh
     // their timestamp.
-    await recordManager.update(hashedDocs.map(({ uid }) => uid), {
-      groupIds: sourceIds,
-      timeAtLeast: indexStartDt,
-    });
+    await recordManager.update(
+      hashedDocs.map(({ uid }) => uid),
+      {
+        groupIds: sourceIds,
+        timeAtLeast: indexStartDt,
+      }
+    );
 
     // If source IDs are provided, we can do the deletion incrementally!
     if (cleanup === "incremental") {
@@ -158,19 +173,23 @@ export async function index(options: {
   }
 
   if (cleanup === "full") {
-    let uidsToDelete: string[] | undefined;
-    while ((uidsToDelete = await recordManager.listKeys({
+    let uidsToDelete: string[] | undefined = await recordManager.listKeys({
       before: indexStartDt,
       limit: cleanupBatchSize,
-    }))) {
-      if (!uidsToDelete.length) {
-        break;
-      }
+    });
+
+    while (uidsToDelete.length) {
+      console.log("trying to delete", uidsToDelete.length, "uids");
       // First delete from vector store.
       await vectorStore.delete(uidsToDelete);
       // Then delete from record manager.
       await recordManager.deleteKeys(uidsToDelete);
       numDeleted += uidsToDelete.length;
+
+      uidsToDelete = await recordManager.listKeys({
+        before: indexStartDt,
+        limit: cleanupBatchSize,
+      });
     }
   }
 
