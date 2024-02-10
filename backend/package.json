@@ -29,7 +29,7 @@
   "license": "MIT",
   "dependencies": {
     "@langchain/community": "^0.0.26",
-    "@langchain/core": "~0.1.13",
+    "@langchain/core": "^0.1.26",
     "@langchain/openai": "^0.0.14",
     "@langchain/weaviate": "^0.0.1",
     "cheerio": "^1.0.0-rc.12",
