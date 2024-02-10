@@ -13,7 +13,11 @@ import {
   RunnableLambda,
 } from "@langchain/core/runnables";
 import { HumanMessage, AIMessage, BaseMessage } from "@langchain/core/messages";
-import { ChatOpenAI, ChatOpenAICallOptions, OpenAIEmbeddings } from "@langchain/openai";
+import {
+  ChatOpenAI,
+  ChatOpenAICallOptions,
+  OpenAIEmbeddings,
+} from "@langchain/openai";
 import { StringOutputParser } from "@langchain/core/output_parsers";
 import {
   PromptTemplate,
@@ -64,7 +68,11 @@ type RetrievalChainInput = {
 };
 
 const getRetriever = async () => {
-  if (!process.env.WEAVIATE_INDEX_NAME || !process.env.WEAVIATE_API_KEY || !process.env.WEAVIATE_HOST) {
+  if (
+    !process.env.WEAVIATE_INDEX_NAME ||
+    !process.env.WEAVIATE_API_KEY ||
+    !process.env.WEAVIATE_HOST
+  ) {
     throw new Error(
       "WEAVIATE_INDEX_NAME, WEAVIATE_API_KEY and WEAVIATE_HOST environment variables must be set",
     );
@@ -148,7 +156,10 @@ const serializeHistory = (input: any) => {
   return convertedChatHistory;
 };
 
-const createChain = <CallOptions>(llm: BaseLanguageModel<CallOptions>, retriever: Runnable) => {
+const createChain = <CallOptions>(
+  llm: BaseLanguageModel<CallOptions>,
+  retriever: Runnable,
+) => {
   const retrieverChain = createRetrieverChain(llm, retriever);
   const context = RunnableMap.from({
     context: RunnableSequence.from([

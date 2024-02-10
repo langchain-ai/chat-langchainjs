@@ -44,7 +44,7 @@ async function loadAPIDocs(): Promise<Array<DocumentInterface>> {
  * @returns {Promise<Array<DocumentInterface>>}
  */
 async function loadLangChainDocs(): Promise<Array<DocumentInterface>> {
-  const loader = new SitemapLoader("https://js.langchain.com/",);
+  const loader = new SitemapLoader("https://js.langchain.com/");
   return loader.load();
 }
 
@@ -53,7 +53,11 @@ function getEmbeddingsModel(): Embeddings {
 }
 
 async function ingestDocs() {
-  if (!process.env.WEAVIATE_API_KEY || !process.env.WEAVIATE_HOST || !process.env.WEAVIATE_INDEX_NAME) {
+  if (
+    !process.env.WEAVIATE_API_KEY ||
+    !process.env.WEAVIATE_HOST ||
+    !process.env.WEAVIATE_INDEX_NAME
+  ) {
     throw new Error(
       "WEAVIATE_API_KEY and WEAVIATE_HOST must be set in the environment"
     );
