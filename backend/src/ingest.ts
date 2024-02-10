@@ -8,7 +8,6 @@ import { Embeddings } from "@langchain/core/embeddings";
 import { WeaviateStore } from "@langchain/weaviate";
 import { PostgresRecordManager } from "@langchain/community/indexes/postgres";
 import { SitemapLoader } from "langchain/document_loaders/web/sitemap";
-import { WEAVIATE_DOCS_INDEX_NAME } from "./constants.js";
 import { index } from "./_index.js";
 
 /**
@@ -45,13 +44,7 @@ async function loadAPIDocs(): Promise<Array<DocumentInterface>> {
  * @returns {Promise<Array<DocumentInterface>>}
  */
 async function loadLangChainDocs(): Promise<Array<DocumentInterface>> {
-  // const regexFailIfNotJsLangChain = /^(?!https:\/\/js\.langchain\.com).*/;
-  // const regexContainsToolsDynamic = /tools\/dynamic/;
-
-  // Filter our 1 bad url (has since been fixed in vercel, but keep the test!)
-  const loader = new SitemapLoader("https://js.langchain.com/", {
-    // filterUrls: [regexFailIfNotJsLangChain, regexContainsToolsDynamic],
-  });
+  const loader = new SitemapLoader("https://js.langchain.com/");
   return loader.load();
 }
 
@@ -60,7 +53,11 @@ function getEmbeddingsModel(): Embeddings {
 }
 
 async function ingestDocs() {
-  if (!process.env.WEAVIATE_API_KEY || !process.env.WEAVIATE_HOST) {
+  if (
+    !process.env.WEAVIATE_API_KEY ||
+    !process.env.WEAVIATE_HOST ||
+    !process.env.WEAVIATE_INDEX_NAME
+  ) {
     throw new Error(
       "WEAVIATE_API_KEY and WEAVIATE_HOST must be set in the environment"
     );
@@ -95,7 +92,7 @@ async function ingestDocs() {
     if (!doc.metadata.source) {
       doc.metadata.source = "";
     }
-    if (doc.metadata.title) {
+    if (!doc.metadata.title) {
       doc.metadata.title = "";
     }
   }
@@ -110,11 +107,11 @@ async function ingestDocs() {
   const embeddings = getEmbeddingsModel();
   const vectorStore = new WeaviateStore(embeddings, {
     client: weaviateClient,
-    indexName: WEAVIATE_DOCS_INDEX_NAME,
+    indexName: process.env.WEAVIATE_INDEX_NAME,
     textKey: "text",
   });
   const recordManager = new PostgresRecordManager(
-    `weaviate/${WEAVIATE_DOCS_INDEX_NAME}`,
+    `weaviate/${process.env.WEAVIATE_INDEX_NAME}`,
     {
       postgresConnectionOptions: {
         host: process.env.DATABASE_HOST,

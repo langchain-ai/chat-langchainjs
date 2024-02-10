@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     const response = await pollForRun(run_id);
     return NextResponse.json(response, { status: 200 });
   } catch (e: any) {
-    console.log(e);
+    console.error(e);
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
 }

@@ -179,7 +179,6 @@ export async function index(options: {
     });
 
     while (uidsToDelete.length) {
-      console.log("trying to delete", uidsToDelete.length, "uids");
       // First delete from vector store.
       await vectorStore.delete(uidsToDelete);
       // Then delete from record manager.

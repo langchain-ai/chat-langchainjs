@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
       { status: 200 },
     );
   } catch (e: any) {
-    console.log(e);
+    console.error(e);
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
 }
@@ -49,7 +49,7 @@ export async function PATCH(req: NextRequest) {
       { status: 200 },
     );
   } catch (e: any) {
-    console.log(e);
+    console.error(e);
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
 }
