@@ -204,7 +204,6 @@ const createChain = <CallOptions>(llm: BaseLanguageModel<CallOptions>, retriever
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    console.log("Called!", body)
     const input = body.input;
     const config = body.config;
 
@@ -247,7 +246,7 @@ export async function POST(req: NextRequest) {
       headers: { "Content-Type": "text/event-stream" },
     });
   } catch (e: any) {
-    console.log(e);
+    console.error(e);
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
 }

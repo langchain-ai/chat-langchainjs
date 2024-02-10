@@ -24,7 +24,6 @@ export function SourceBubble({
     <a href={source.url} target="_blank">
       <Card
         onClick={async () => {
-          console.log("clicked", source);
           window.open(source.url, "_blank");
           if (runId) {
             await sendFeedback({
