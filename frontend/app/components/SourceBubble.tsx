@@ -21,31 +21,34 @@ export function SourceBubble({
   runId?: string;
 }) {
   return (
-    <Card
-      onClick={async () => {
-        window.open(source.url, "_blank");
-        if (runId) {
-          await sendFeedback({
-            key: "user_click",
-            runId,
-            value: source.url,
-            isExplicit: false,
-          });
-        }
-      }}
-      backgroundColor={highlighted ? "rgb(58, 58, 61)" : "rgb(78,78,81)"}
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
-      cursor={"pointer"}
-      alignSelf={"stretch"}
-      height="100%"
-      overflow={"hidden"}
-    >
-      <CardBody>
-        <Heading size={"sm"} fontWeight={"normal"} color={"white"}>
-          {source.title}
-        </Heading>
-      </CardBody>
-    </Card>
+    <a href={source.url} target="_blank">
+      <Card
+        onClick={async () => {
+          console.log("clicked", source);
+          window.open(source.url, "_blank");
+          if (runId) {
+            await sendFeedback({
+              key: "user_click",
+              runId,
+              value: source.url,
+              isExplicit: false,
+            });
+          }
+        }}
+        backgroundColor={highlighted ? "rgb(58, 58, 61)" : "rgb(78,78,81)"}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+        cursor={"pointer"}
+        alignSelf={"stretch"}
+        height="100%"
+        overflow={"hidden"}
+      >
+        <CardBody>
+          <Heading size={"sm"} fontWeight={"normal"} color={"white"}>
+            {source.title}
+          </Heading>
+        </CardBody>
+      </Card>
+    </a>
   );
 }
