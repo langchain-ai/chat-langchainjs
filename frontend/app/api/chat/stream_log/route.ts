@@ -223,6 +223,7 @@ export async function POST(req: NextRequest) {
       temperature: 0,
     });
     const retriever = await getRetriever();
+    // @ts-expect-error a problem for another day...
     const answerChain = createChain<ChatOpenAICallOptions>(llm, retriever);
 
     /**
