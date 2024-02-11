@@ -2,7 +2,6 @@
 
 import { NextRequest, NextResponse } from "next/server";
 
-import type { BaseLanguageModel } from "@langchain/core/language_models/base";
 import type { Document } from "@langchain/core/documents";
 
 import {
@@ -13,11 +12,12 @@ import {
   RunnableLambda,
 } from "@langchain/core/runnables";
 import { HumanMessage, AIMessage, BaseMessage } from "@langchain/core/messages";
+import { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import {
   ChatOpenAI,
-  ChatOpenAICallOptions,
   OpenAIEmbeddings,
 } from "@langchain/openai";
+import { ChatFireworks } from "@langchain/community/chat_models/fireworks";
 import { StringOutputParser } from "@langchain/core/output_parsers";
 import {
   PromptTemplate,
@@ -95,7 +95,7 @@ const getRetriever = async () => {
   return vectorstore.asRetriever({ k: 6 });
 };
 
-const createRetrieverChain = (llm: BaseLanguageModel, retriever: Runnable) => {
+const createRetrieverChain = (llm: BaseChatModel, retriever: Runnable) => {
   // Small speed/accuracy optimization: no need to rephrase the first question
   // since there shouldn't be any meta-references to prior chat history
   const CONDENSE_QUESTION_PROMPT =
@@ -156,8 +156,8 @@ const serializeHistory = (input: any) => {
   return convertedChatHistory;
 };
 
-const createChain = <CallOptions>(
-  llm: BaseLanguageModel<CallOptions>,
+const createChain = (
+  llm: BaseChatModel,
   retriever: Runnable,
 ) => {
   const retrieverChain = createRetrieverChain(llm, retriever);
@@ -218,13 +218,24 @@ export async function POST(req: NextRequest) {
     const input = body.input;
     const config = body.config;
 
-    const llm = new ChatOpenAI({
-      modelName: "gpt-3.5-turbo-1106",
-      temperature: 0,
-    });
+    let llm;
+    if (config.configurable.llm === "openai_gpt_3_5_turbo") {
+      llm = new ChatOpenAI({
+        modelName: "gpt-3.5-turbo-1106",
+        temperature: 0,
+      });
+    } else if (config.configurable.llm === "fireworks_mixtral") {
+      llm = new ChatFireworks({
+        modelName: "accounts/fireworks/models/mixtral-8x7b-instruct",
+        temperature: 0,
+      })
+    } else {
+      throw new Error("Invalid LLM option passed. Must be 'openai' or 'mixtral'. Received: " + config.llm)
+    }
+
     const retriever = await getRetriever();
     // @ts-expect-error a problem for another day...
-    const answerChain = createChain<ChatOpenAICallOptions>(llm, retriever);
+    const answerChain = createChain(llm, retriever);
 
     /**
      * Narrows streamed log output down to final output and the FindDocs tagged chain to
