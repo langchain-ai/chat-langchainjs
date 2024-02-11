@@ -8,7 +8,14 @@ __pycache__/
 
 .env.local
 .env
-.yarn/cache/**
+
+.yarn/*
+.yarn/install-state.gz
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
 
 # Distribution / packaging
 .Python
