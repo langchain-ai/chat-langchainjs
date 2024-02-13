@@ -68,16 +68,16 @@ const getRetriever = async () => {
   if (
     !process.env.WEAVIATE_INDEX_NAME ||
     !process.env.WEAVIATE_API_KEY ||
-    !process.env.WEAVIATE_HOST
+    !process.env.WEAVIATE_URL
   ) {
     throw new Error(
-      "WEAVIATE_INDEX_NAME, WEAVIATE_API_KEY and WEAVIATE_HOST environment variables must be set",
+      "WEAVIATE_INDEX_NAME, WEAVIATE_API_KEY and WEAVIATE_URL environment variables must be set",
     );
   }
 
   const client = weaviate.client({
     scheme: "https",
-    host: process.env.WEAVIATE_HOST,
+    host: process.env.WEAVIATE_URL,
     apiKey: new ApiKey(process.env.WEAVIATE_API_KEY),
   });
   const vectorstore = await WeaviateStore.fromExistingIndex(
