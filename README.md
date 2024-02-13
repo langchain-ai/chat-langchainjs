@@ -5,7 +5,7 @@ Built with [LangChain](https://github.com/langchain-ai/langchainjs/), and [Next.
 
 Deployed version: [chatjs.langchain.com](https://chatjs.langchain.com)
 
-> Looking for the Python? Click [here](https://chat.langchain.com)
+> Looking for the Python version? Click [here](https://chat.langchain.com)
 
 The app leverages LangChain's streaming API to update the page in real time for multiple users.
 
