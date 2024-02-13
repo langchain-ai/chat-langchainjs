@@ -55,11 +55,11 @@ function getEmbeddingsModel(): Embeddings {
 async function ingestDocs() {
   if (
     !process.env.WEAVIATE_API_KEY ||
-    !process.env.WEAVIATE_HOST ||
+    !process.env.WEAVIATE_URL ||
     !process.env.WEAVIATE_INDEX_NAME
   ) {
     throw new Error(
-      "WEAVIATE_API_KEY and WEAVIATE_HOST must be set in the environment"
+      "WEAVIATE_API_KEY, WEAVIATE_URL, and WEAVIATE_INDEX_NAME must be set in the environment"
     );
   }
 
@@ -100,7 +100,7 @@ async function ingestDocs() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const weaviateClient = (weaviate as any).client({
     scheme: "https",
-    host: process.env.WEAVIATE_HOST,
+    host: process.env.WEAVIATE_URL,
     apiKey: new ApiKey(process.env.WEAVIATE_API_KEY),
   }) as WeaviateClient;
 
@@ -110,16 +110,23 @@ async function ingestDocs() {
     indexName: process.env.WEAVIATE_INDEX_NAME,
     textKey: "text",
   });
-  const recordManager = new PostgresRecordManager(
-    `weaviate/${process.env.WEAVIATE_INDEX_NAME}`,
-    {
-      postgresConnectionOptions: {
+
+  const connectionOptions = process.env.RECORD_MANAGER_DB_URL
+    ? {
+        connectionString: process.env.RECORD_MANAGER_DB_URL,
+      }
+    : {
         host: process.env.DATABASE_HOST,
         port: Number(process.env.DATABASE_PORT),
         user: process.env.DATABASE_USERNAME,
         password: process.env.DATABASE_PASSWORD,
         database: process.env.DATABASE_NAME,
-      },
+      };
+
+  const recordManager = new PostgresRecordManager(
+    `weaviate/${process.env.WEAVIATE_INDEX_NAME}`,
+    {
+      postgresConnectionOptions: connectionOptions,
     }
   );
   await recordManager.createSchema();

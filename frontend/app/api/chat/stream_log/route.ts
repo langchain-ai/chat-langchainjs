@@ -13,10 +13,7 @@ import {
 } from "@langchain/core/runnables";
 import { HumanMessage, AIMessage, BaseMessage } from "@langchain/core/messages";
 import { BaseChatModel } from "@langchain/core/language_models/chat_models";
-import {
-  ChatOpenAI,
-  OpenAIEmbeddings,
-} from "@langchain/openai";
+import { ChatOpenAI, OpenAIEmbeddings } from "@langchain/openai";
 import { ChatFireworks } from "@langchain/community/chat_models/fireworks";
 import { StringOutputParser } from "@langchain/core/output_parsers";
 import {
@@ -156,10 +153,7 @@ const serializeHistory = (input: any) => {
   return convertedChatHistory;
 };
 
-const createChain = (
-  llm: BaseChatModel,
-  retriever: Runnable,
-) => {
+const createChain = (llm: BaseChatModel, retriever: Runnable) => {
   const retrieverChain = createRetrieverChain(llm, retriever);
   const context = RunnableMap.from({
     context: RunnableSequence.from([
@@ -228,13 +222,15 @@ export async function POST(req: NextRequest) {
       llm = new ChatFireworks({
         modelName: "accounts/fireworks/models/mixtral-8x7b-instruct",
         temperature: 0,
-      })
+      });
     } else {
-      throw new Error("Invalid LLM option passed. Must be 'openai' or 'mixtral'. Received: " + config.llm)
+      throw new Error(
+        "Invalid LLM option passed. Must be 'openai' or 'mixtral'. Received: " +
+          config.llm,
+      );
     }
 
     const retriever = await getRetriever();
-    // @ts-expect-error a problem for another day...
     const answerChain = createChain(llm, retriever);
 
     /**
