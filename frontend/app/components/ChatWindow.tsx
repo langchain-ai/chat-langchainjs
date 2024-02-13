@@ -27,10 +27,7 @@ import { Select, Link } from "@chakra-ui/react";
 import { Source } from "./SourceBubble";
 import { apiBaseUrl } from "../utils/constants";
 
-const MODEL_TYPES = [
-  "openai_gpt_3_5_turbo",
-  "fireworks_mixtral",
-];
+const MODEL_TYPES = ["openai_gpt_3_5_turbo", "fireworks_mixtral"];
 
 const defaultLlmValue =
   MODEL_TYPES[Math.floor(Math.random() * MODEL_TYPES.length)];

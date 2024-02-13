@@ -13,10 +13,7 @@ import {
 } from "@langchain/core/runnables";
 import { HumanMessage, AIMessage, BaseMessage } from "@langchain/core/messages";
 import { BaseChatModel } from "@langchain/core/language_models/chat_models";
-import {
-  ChatOpenAI,
-  OpenAIEmbeddings,
-} from "@langchain/openai";
+import { ChatOpenAI, OpenAIEmbeddings } from "@langchain/openai";
 import { ChatFireworks } from "@langchain/community/chat_models/fireworks";
 import { StringOutputParser } from "@langchain/core/output_parsers";
 import {
@@ -71,16 +68,16 @@ const getRetriever = async () => {
   if (
     !process.env.WEAVIATE_INDEX_NAME ||
     !process.env.WEAVIATE_API_KEY ||
-    !process.env.WEAVIATE_HOST
+    !process.env.WEAVIATE_URL
   ) {
     throw new Error(
-      "WEAVIATE_INDEX_NAME, WEAVIATE_API_KEY and WEAVIATE_HOST environment variables must be set",
+      "WEAVIATE_INDEX_NAME, WEAVIATE_API_KEY and WEAVIATE_URL environment variables must be set",
     );
   }
 
   const client = weaviate.client({
     scheme: "https",
-    host: process.env.WEAVIATE_HOST,
+    host: process.env.WEAVIATE_URL,
     apiKey: new ApiKey(process.env.WEAVIATE_API_KEY),
   });
   const vectorstore = await WeaviateStore.fromExistingIndex(
@@ -156,10 +153,7 @@ const serializeHistory = (input: any) => {
   return convertedChatHistory;
 };
 
-const createChain = (
-  llm: BaseChatModel,
-  retriever: Runnable,
-) => {
+const createChain = (llm: BaseChatModel, retriever: Runnable) => {
   const retrieverChain = createRetrieverChain(llm, retriever);
   const context = RunnableMap.from({
     context: RunnableSequence.from([
@@ -228,13 +222,15 @@ export async function POST(req: NextRequest) {
       llm = new ChatFireworks({
         modelName: "accounts/fireworks/models/mixtral-8x7b-instruct",
         temperature: 0,
-      })
+      });
     } else {
-      throw new Error("Invalid LLM option passed. Must be 'openai' or 'mixtral'. Received: " + config.llm)
+      throw new Error(
+        "Invalid LLM option passed. Must be 'openai' or 'mixtral'. Received: " +
+          config.llm,
+      );
     }
 
     const retriever = await getRetriever();
-    // @ts-expect-error a problem for another day...
     const answerChain = createChain(llm, retriever);
 
     /**

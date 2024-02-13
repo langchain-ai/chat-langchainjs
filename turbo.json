@@ -15,6 +15,10 @@
       "dependsOn": ["^format"],
       "inputs": ["**/src/**"]
     },
+    "format:check": {
+      "dependsOn": ["^format:check"],
+      "inputs": ["**/src/**"]
+    },
     "start": {
       "dependsOn": ["^start"],
       "inputs": ["**/src/**"]
