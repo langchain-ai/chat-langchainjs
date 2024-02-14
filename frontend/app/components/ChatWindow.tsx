@@ -158,8 +158,8 @@ export function ChatWindow(props: { conversationId: string }) {
             newMessages.push({
               id: Math.random().toString(),
               content: parsedResult.trim(),
-              runId: runId,
-              sources: sources,
+              runId,
+              sources,
               role: "assistant",
             });
           } else if (newMessages[messageIndex] !== undefined) {
@@ -268,11 +268,11 @@ export function ChatWindow(props: { conversationId: string }) {
             .map((m, index) => (
               <ChatMessageBubble
                 key={m.id}
-                message={{ ...m }}
+                message={m}
                 aiEmoji="🦜"
                 isMostRecent={index === 0}
                 messageCompleted={!isLoading}
-              ></ChatMessageBubble>
+              />
             ))
         ) : (
           <EmptyState onChoice={sendInitialQuestion} />

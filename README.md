@@ -1,16 +1,16 @@
-# 🦜️🔗 Chat LangChain
+# 🦜️🔗 Chat LangChain.js
 
 This repo is an implementation of a locally hosted chatbot specifically focused on question answering over the [LangChain documentation](https://langchain.readthedocs.io/en/latest/).
 Built with [LangChain](https://github.com/langchain-ai/langchainjs/), and [Next.js](https://nextjs.org).
 
-Deployed version: [chatjs.langchain.com](https://chatjs.langchain.com)
+Deployed version: [chatjs.langchain.com](https://github.com/langchain-ai/chat-langchain)
 
-> Looking for the Python? Click [here](https://chat.langchain.com)
+> Looking for the Python version? Click [here](https://chat.langchain.com)
 
 The app leverages LangChain's streaming API to update the page in real time for multiple users.
 
 ## ✅ Running locally
-1. Install dependencies via: `yarn.install`.
+1. Install dependencies via: `yarn install`.
 2. Set the required environment variables listed inside [`backend/.env.example`](backend/.env.example) for the backend, and [`frontend/.env.example`](frontend/.env.example) for the frontend.
 
 ### Ingest

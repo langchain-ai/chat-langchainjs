@@ -353,9 +353,9 @@ export function ChatMessageBubble(props: {
               size="sm"
               variant="outline"
               colorScheme={runId === null ? "blue" : "gray"}
-              onClick={(e) => {
+              onClick={async (e) => {
                 e.preventDefault();
-                viewTrace();
+                await viewTrace();
               }}
               isLoading={traceIsLoading}
               loadingText="🔄"

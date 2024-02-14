@@ -1,5 +1,3 @@
-// JS backend not used by default, see README for instructions.
-
 import { NextRequest, NextResponse } from "next/server";
 
 import { Client } from "langsmith";
