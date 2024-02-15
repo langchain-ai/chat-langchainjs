@@ -151,9 +151,10 @@ async function ingestDocs() {
     const { data: numVecsData } = await weaviateClient.graphql
       .aggregate()
       .withClassName(process.env.WEAVIATE_INDEX_NAME)
-      .withFields('meta { count }')
+      .withFields("meta { count }")
       .do();
-    const numVecs = numVecsData.Aggregate[process.env.WEAVIATE_INDEX_NAME][0].meta.count;
+    const numVecs =
+      numVecsData.Aggregate[process.env.WEAVIATE_INDEX_NAME][0].meta.count;
     console.log(`LangChain now has this many vectors: ${numVecs}`);
   } catch (e) {
     console.error("Failed to fetch total vectors.");
