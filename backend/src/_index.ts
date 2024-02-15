@@ -164,7 +164,9 @@ export async function index(options: {
 
       if (uidsToDelete.length) {
         // Then delete from vector store
-        await vectorStore.delete(uidsToDelete);
+        await vectorStore.delete({
+          ids: uidsToDelete,
+        });
         // Finally delete from record store
         await recordManager.deleteKeys(uidsToDelete);
         numDeleted += uidsToDelete.length;
@@ -180,7 +182,9 @@ export async function index(options: {
 
     while (uidsToDelete.length) {
       // First delete from vector store.
-      await vectorStore.delete(uidsToDelete);
+      await vectorStore.delete({
+        ids: uidsToDelete,
+      });
       // Then delete from record manager.
       await recordManager.deleteKeys(uidsToDelete);
       numDeleted += uidsToDelete.length;
