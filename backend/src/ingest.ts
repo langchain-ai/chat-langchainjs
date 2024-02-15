@@ -147,12 +147,19 @@ async function ingestDocs() {
     "Indexing stats"
   );
 
-  const nodeStatus = await weaviateClient.cluster.nodesStatusGetter().do();
-  let numVecs = 0;
-  nodeStatus.nodes?.forEach((node) => {
-    numVecs += node.stats?.objectCount ?? 0;
-  });
-  console.log(`LangChain now has this many vectors: ${numVecs}`);
+  try {
+    const { data: numVecsData } = await weaviateClient.graphql
+      .aggregate()
+      .withClassName(process.env.WEAVIATE_INDEX_NAME)
+      .withFields("meta { count }")
+      .do();
+    const numVecs =
+      numVecsData.Aggregate[process.env.WEAVIATE_INDEX_NAME][0].meta.count;
+    console.log(`LangChain now has this many vectors: ${numVecs}`);
+  } catch (e) {
+    console.error("Failed to fetch total vectors.");
+    throw e;
+  }
 }
 
 ingestDocs().catch((e) => {
