@@ -163,10 +163,12 @@ export async function index(options: {
       });
 
       if (uidsToDelete.length) {
+        console.log("Trying to delete");
         // Then delete from vector store
         await vectorStore.delete({
           ids: uidsToDelete,
         });
+        console.log("Deleted")
         // Finally delete from record store
         await recordManager.deleteKeys(uidsToDelete);
         numDeleted += uidsToDelete.length;
@@ -181,10 +183,12 @@ export async function index(options: {
     });
 
     while (uidsToDelete.length) {
+      console.log("Trying to delete ---full---");
       // First delete from vector store.
       await vectorStore.delete({
         ids: uidsToDelete,
       });
+      console.log("Deleted ---full---")
       // Then delete from record manager.
       await recordManager.deleteKeys(uidsToDelete);
       numDeleted += uidsToDelete.length;

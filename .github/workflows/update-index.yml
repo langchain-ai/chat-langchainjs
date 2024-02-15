@@ -1,15 +1,21 @@
 name: Update index
 
+# on:
+#   workflow_dispatch:
+#     inputs:
+#       force_update:
+#         description: 'Whether to overwrite documents found in the record manager'
+#         required: false
+#         default: false
+#         type: boolean
+#   schedule:
+#     - cron:  '0 13 * * *'
+
 on:
-  workflow_dispatch:
-    inputs:
-      force_update:
-        description: 'Whether to overwrite documents found in the record manager'
-        required: false
-        default: false
-        type: boolean
-  schedule:
-    - cron:  '0 13 * * *'
+  push:
+    branches: ["main"]
+  pull_request:
+  workflow_dispatch:  # Allows triggering the workflow manually in GitHub UI
 
 jobs:
   build:
