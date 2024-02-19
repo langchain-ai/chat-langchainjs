@@ -3,7 +3,7 @@
 This repo is an implementation of a locally hosted chatbot specifically focused on question answering over the [LangChain documentation](https://langchain.readthedocs.io/en/latest/).
 Built with [LangChain](https://github.com/langchain-ai/langchainjs/), and [Next.js](https://nextjs.org).
 
-Deployed version: [chatjs.langchain.com](chatjs.langchain.com)
+Deployed version: [chatjs.langchain.com](https://chatjs.langchain.com)
 
 > Looking for the Python version? Click [here](https://github.com/langchain-ai/chat-langchain)
 
