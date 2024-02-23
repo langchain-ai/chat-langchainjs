@@ -98,8 +98,8 @@ export function ChatWindow(props: { conversationId: string }) {
     marked.setOptions({ renderer });
 
     try {
-      console.log(apiBaseUrl)
-      console.log(process.env)
+      console.log(apiBaseUrl);
+      console.log(process.env);
       const sourceStepName = "FindDocs";
       let streamedResponse: Record<string, any> = {};
       const remoteChain = new RemoteRunnable({
