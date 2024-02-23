@@ -177,6 +177,8 @@ export function ChatMessageBubble(props: {
   const viewTrace = async () => {
     try {
       setTraceIsLoading(true);
+      console.log(apiBaseUrl)
+      console.log(process.env)
       const response = await fetch(apiBaseUrl + "/get_trace", {
         method: "POST",
         headers: {
