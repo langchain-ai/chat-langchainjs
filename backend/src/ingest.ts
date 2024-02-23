@@ -158,7 +158,6 @@ async function ingestDocs() {
     console.log(`LangChain now has this many vectors: ${numVecs}`);
   } catch (e) {
     console.error("Failed to fetch total vectors.");
-    throw e;
   }
 }
 
