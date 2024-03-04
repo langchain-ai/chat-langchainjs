@@ -28,7 +28,17 @@ The indexing API also uses a Record Manager to store the records of previously i
 
 ## Query Analysis
 
-Finally, we perform query analysis on followup chat conversations.
+Finally, we perform query analysis on followup chat conversations. It is important to note that we only do this for followups, and not initial questions. Let's break down the reasoning here:
+
+Users are not always the best prompters, and can very easily miss some context or phrase their question poorly. We can be confident that the LLM will not make this mistake.
+Additionally, given a chat history (which is always passed in context to a model) you may not need to include certain parts of the question, or the reverse, where you do need to clarify additional information.
+
+Doing all this helps make better formed questions for the model, without having to rely on the user to do so.
+
+Lastly, we don't perform this on the initial question for two main reasons:
+
+1. **Speed**: Although models are getting faster and faster, they still take longer than we'd like to return a response. This is even more important for the first question, as the chat bot hasn't proved its usefulness to the user yet, and you don't want to lose them due to speed before they've even started.
+2. **Context**: Without a chat history, the model is lacking some important context around the users question.
 
 Most users won't format their queries perfectly for LLMs, and that's okay!
 To account for this, we have an extra step before final generation which takes the users query and rephrase it to be more suitable for the LLM.

@@ -14,11 +14,13 @@ LANGCHAIN_TRACING_V2=true
 LANGCHAIN_API_KEY=...
 ```
 
-For improved DX, you also sometimes need to pass a config object through to different functions, like so:
+Sometimes need to pass a config object through to different functions, like so:
 
 ```typescript
 new RunnableLambda({ func: (input, config ) => yourRunnable.invoke(input, config) })
 ```
+
+Doing this keeps all your traces inside the same run in LangSmith, making it easier to debug and track the different paths your application took.
 
 LangSmith tracing is already setup in an optimized way for Chat LangChain, and only needs extra configuration if you're extending the application in a way that's not covered by the default tracing. When running queries through Chat LangChain, you can expect to see LangSmith traces like this show up on your project:
 
