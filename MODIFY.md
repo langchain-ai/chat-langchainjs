@@ -2,6 +2,39 @@
 
 The Chat LangChain repo was built to serve two use cases. The first being question answering over the LangChain documentation. The second is to offer a production ready chat bot which you can easily customize for your specific use case. In this doc we'll go over each step you need to take to customize the repo for your need.
 
+## Vector Store
+
+One of the simplest ways to modify Chat LangChain and get a feel for the codebase is to modify the vector store. All of the operations in Chat LangChain are largely based around the vector store: ingestion, retrieval, context, etc.
+
+There are two places the vector store is used:
+- **Ingestion**: The vector store is used to store the embeddings of every document used as context. Located at [`/backend/src/ingest.ts`](/backend/src/ingest.ts) you can easily modify the provider to use a different vector store.
+- **Retrieval**: The vector store is used to retrieve documents based on a user's query. Located at [`/frontend/app/api/chat/stream_log/route.ts`](/frontend/app/api/chat/stream_log/route.ts) you can easily modify the provider to use a different vector store.
+
+### Steps
+
+For backend ingestion, locate the `ingestDocs` function. You'll want to modify the first `if` statement to instead check for any required environment variables the new provider you want to use requires. After, scroll down until you find where the `weaviateClient` and `vectorStore` variables are defined:
+
+```typescript
+const weaviateClient = (weaviate as any).client({
+  scheme: "https",
+  host: process.env.WEAVIATE_URL,
+  apiKey: new ApiKey(process.env.WEAVIATE_API_KEY),
+}) as WeaviateClient;
+
+const vectorStore = new WeaviateStore(embeddings, {
+  client: weaviateClient,
+  indexName: process.env.WEAVIATE_INDEX_NAME,
+  textKey: "text",
+});
+```
+
+To make transitioning as easy as possible, all you should do is:
+
+1. Delete the weaviate client instantiation.
+2. Replace the vector store instantiation with the new provider's instantiation. Remember to keep the variable name (`vectorStore`) the same. Since all LangChain vector stores are built on top of the same API, no other modifications should be necessary.
+
+Finally, perform these same steps inside the `stream_log` route, and you're done!
+
 ## Frontend
 
 The frontend doesn't have much LangChain specific code that would need modification. The main parts are the LangChain UI branding and question suggestions.
