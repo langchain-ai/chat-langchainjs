@@ -24,6 +24,12 @@ Indexing your documents is a vital part of any production RAG application. In sh
 
 2. **Performance**: Indexing your documents allows for faster ingestion. With indexing you don't have to generate embeddings for every document on ingestion, and instead only need to generate embeddings for new documents.
 
+In order to help with indexing we use the LangChain indexing API. This API contains all the features required for robust indexing in your application. Indexing is done in two main steps:
+
+1. **Ingestion**: Ingestion is where you pull in all the documents you want to add to your vector store. This could be all of the documents available to you, or just a couple new documents.
+2. **Hashing**: Once the ingestion API is passed your documents, it creates a unique hash for each, containing some metadata like the date it was ingested. This allows for the indexing API to only ingest new documents, and not duplicate documents. These hashes are stored in what we call the "Record Manager".
+3. **Insertion**: Finally, once the documents are hashed, and confirmed to not already exist through the Record Manager, they are inserted into the vector store.
+
 The indexing API also uses a Record Manager to store the records of previously indexed documents in between ingestion. This manager stores the hashed values of the documents, and the time they were ingested. This allows for the indexing API to only ingest new documents, and not duplicate documents.
 
 ## Query Analysis
