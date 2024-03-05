@@ -4,6 +4,8 @@ This doc will outline steps which are recommended to bring this LLM application 
 
 Bringing LLM applications to production mainly involve preventing/mitigating abuse and guardrails around prompt injection. We'll go over some of your options for these, and suggestions on how to implement them.
 
+> ### We also have in depth security documentation on the main LangChain documentation site. To visit, click [here](https://js.langchain.com/docs/security).
+
 ## Abuse
 
 Abuse is a big concern when deploying LLMs to production, mainly due to the cost associated with running the model (or in our case, calling an LLM API). The first and simplest step is to require accounts with some sort of "identity verification". Commonly this is done with an email verification, or for slightly more security, a phone number verification. Adding an account creation step will defer some abuse, and confirming email/phone numbers will make it even harder for users to abuse the system.
