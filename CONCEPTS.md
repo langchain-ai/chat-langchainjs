@@ -6,7 +6,7 @@ We'll start with the vector store, the basis of the entire system.
 
 ## Vector Store
 
-Vector stores, fundamentally, are specialized databases designed to efficiently store and manage vectors, which are high-dimensional arrays of numbers. These vectors are not arbitrary; they are the product of sophisticated text embedding models, such as those provided by [OpenAI's `text-embedding`](https://platform.openai.com/docs/guides/embeddings) API.
+Vector stores, fundamentally, are specialized databases designed to efficiently store and manage vectors, which are high-dimensional arrays of numbers. These vectors are not arbitrary; they are the product of sophisticated text embedding models, such as those provided by [OpenAI's `text-embedding`](https://js.langchain.com/docs/integrations/text_embedding/openai) API.
 
 In the context of our application, vector stores play a pivotal role in enhancing the capabilities of our language model. Here's a deeper dive into the process:
 
@@ -31,6 +31,19 @@ In order to help with indexing we use the LangChain indexing API. This API conta
 3. **Insertion**: Finally, once the documents are hashed, and confirmed to not already exist through the Record Manager, they are inserted into the vector store.
 
 The indexing API also uses a Record Manager to store the records of previously indexed documents in between ingestion. This manager stores the hashed values of the documents, and the time they were ingested. This allows for the indexing API to only ingest new documents, and not duplicate documents.
+
+### Record Manager
+
+The LangChain Record Manager API provides an interface for managing records in a database that tracks upserted documents before they are ingested into a vector store for LLM usage.
+It allows you to efficiently insert, update, delete, and query records.
+
+**Key Concepts**
+- **Namespace**: Each Record Manager is associated with a namespace. This allows logically separating records for different use cases.
+- **Keys**: Each record is uniquely identified by a key within the namespace.
+- **Group IDs**: Records can optionally be associated with group IDs to allow filtering and batch operations on related records.
+- **Timestamps**: Each record has an updated_at timestamp tracking the last time it was upserted. This enables querying records within time ranges.
+
+Using the LangChain Record Manager API allows efficient tracking of which documents need to be added to or updated in the vector store, making the ingestion process more robust and avoiding unnecessary duplication work.
 
 ## Query Analysis
 
