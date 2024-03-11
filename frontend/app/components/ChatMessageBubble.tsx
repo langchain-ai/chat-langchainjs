@@ -66,7 +66,9 @@ const createAnswerElements = (
     React.SetStateAction<boolean[]>
   >,
 ) => {
-  const matches = Array.from(content.matchAll(/\[\^?\$?{?(\d+)}?\^?\]|\[\$\{(\d+)\}\]/g));
+  const matches = Array.from(
+    content.matchAll(/\[\^?\$?{?(\d+)}?\^?\]|\[\$\{(\d+)\}\]/g),
+  );
   const elements: JSX.Element[] = [];
   let prevIndex = 0;
 
