@@ -26,7 +26,7 @@ async function loadDataset(): Promise<Run[]> {
 
 /**
  * Filter duplicates, blacklisted questions from runs.
- * @param {Run[]} runs 
+ * @param {Run[]} runs
  * @returns {Run[]} A list of runs without duplicate questions and blacklisted questions
  */
 function filterDuplicatesAndBlacklistedQuestions(runs: Run[]) {
@@ -38,8 +38,12 @@ function filterDuplicatesAndBlacklistedQuestions(runs: Run[]) {
     recordedQuestions.add(run.inputs.question);
     return true;
   });
-  const runsNotBlacklisted = uniqueRuns.filter((run) => !BLACKLISTED_RUN_IDS.includes(run.id));
-  console.log(`Found ${runsNotBlacklisted.length} unique and not blacklisted runs`);
+  const runsNotBlacklisted = uniqueRuns.filter(
+    (run) => !BLACKLISTED_RUN_IDS.includes(run.id)
+  );
+  console.log(
+    `Found ${runsNotBlacklisted.length} unique and not blacklisted runs`
+  );
   return runsNotBlacklisted;
 }
 
@@ -67,28 +71,31 @@ function filterWithChatHistory(runs: Run[]): Run[] {
 
 /**
  * Given a list of runs, construct a dataset to upload to langsmith
- * @param runs 
+ * @param runs
  */
 async function createAndUploadDataset(runs: Run[]) {
-  await client.deleteDataset({ datasetId: "60bae478-639c-467b-8c74-bed79ddf69cd" });
+  await client.deleteDataset({
+    datasetId: "60bae478-639c-467b-8c74-bed79ddf69cd",
+  });
 
   const dataset = await client.createDataset("chat-langchainjs-eval-qa-pairs", {
-    description: "A question-answer pair dataset for the Chat LangChain.js project. Uses real q/a pairs from runs which received thumbs down feedback.",
+    description:
+      "A question-answer pair dataset for the Chat LangChain.js project. Uses real q/a pairs from runs which received thumbs down feedback.",
   });
 
   const examples: {
-    inputs: { [key: string]: string }[],
-    outputs: { [key: string]: string }[],
-    sourceRunIds: string[],
-    datasetId: string,
+    inputs: { [key: string]: string }[];
+    outputs: { [key: string]: string }[];
+    sourceRunIds: string[];
+    datasetId: string;
   } = {
     inputs: [],
     outputs: [],
     sourceRunIds: [],
     datasetId: dataset.id,
-  }
+  };
 
-  runs.forEach(async (run) => {
+  runs.forEach((run) => {
     if (!run.outputs) {
       return;
     }
@@ -104,10 +111,9 @@ async function curateData() {
   const runs = await loadDataset();
   console.log("runs.length", runs.length);
   const runsWithoutHistory = filterWithChatHistory(runs);
-  const filteredQuestions = filterDuplicatesAndBlacklistedQuestions(runsWithoutHistory);
+  const filteredQuestions =
+    filterDuplicatesAndBlacklistedQuestions(runsWithoutHistory);
   console.log("filteredQuestions.length", filteredQuestions.length);
   await createAndUploadDataset(filteredQuestions);
 }
-curateData();
-
-
+curateData().catch(console.error);

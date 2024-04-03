@@ -33,4 +33,7 @@ const badRunIds = [
   "6ad30fdd-0523-4e44-8924-7a6a1fed718a",
 ];
 
-export const BLACKLISTED_RUN_IDS = badRunIds.concat(questionableRunIds).concat(datedQuestions).concat(langgraphQuestions);
+export const BLACKLISTED_RUN_IDS = badRunIds
+  .concat(questionableRunIds)
+  .concat(datedQuestions)
+  .concat(langgraphQuestions);

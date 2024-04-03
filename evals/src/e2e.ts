@@ -1,12 +1,4 @@
-/**
- * End to end evals
- * 
- * Dataset name: "chat-langchainjs-eval-qa-pairs"
- * 
- * Evaluates:
- * 1. Final generation
- * 2. Returned documents
- */
+/* eslint-disable no-process-env */
 
 import { RemoteRunnable } from "@langchain/core/runnables/remote";
 import { applyPatch } from "@langchain/core/utils/json_patch";
@@ -15,17 +7,21 @@ import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { Runnable, RunnableLambda } from "@langchain/core/runnables";
 import { BaseMessage } from "@langchain/core/messages";
 import { runOnDataset } from "langchain/smith";
-import { GradingFunctionParams, GradingFunctionResult, StringEvaluator } from "langsmith/evaluation";
+import {
+  GradingFunctionParams,
+  GradingFunctionResult,
+  StringEvaluator,
+} from "langsmith/evaluation";
 import { z } from "zod";
 
 type Source = {
   url: string;
   title: string;
-}
+};
 
 type APIResult = {
   finalOutputString: string;
-}
+};
 
 /**
  * Grade the results of the Chat LangChain API against expected
@@ -33,21 +29,35 @@ type APIResult = {
  * @param {GradingFunctionParams} params The input, prediction, and answer to grade
  * @returns {Promise<GradingFunctionResult>} The result of the grading function
  */
-async function gradingFunction(params: GradingFunctionParams): Promise<GradingFunctionResult> {
+async function gradingFunction(
+  params: GradingFunctionParams
+): Promise<GradingFunctionResult> {
   const model = new ChatOpenAI({
     modelName: "gpt-4-turbo",
     temperature: 0,
   });
   const schema = z.object({
-    hasCitations: z.boolean().describe("Whether or not the answer contains citations."),
-    answersQuestion: z.boolean().describe("Whether or not an answer is provided. Should be false if the answer is off topic."),
-    isCorrect: z.boolean().describe("Whether or not the answer is correct, in respect to the expected answer."),
-  })
+    hasCitations: z
+      .boolean()
+      .describe("Whether or not the answer contains citations."),
+    answersQuestion: z
+      .boolean()
+      .describe(
+        "Whether or not an answer is provided. Should be false if the answer is off topic."
+      ),
+    isCorrect: z
+      .boolean()
+      .describe(
+        "Whether or not the answer is correct, in respect to the expected answer."
+      ),
+  });
   const modelWithTools = model.withStructuredOutput(schema, {
     name: "gradingFunction",
   });
   const prompt = ChatPromptTemplate.fromMessages([
-    ["system", `You are an expert software engineer, tasked with grading the answer to a question.
+    [
+      "system",
+      `You are an expert software engineer, tasked with grading the answer to a question.
 You should think through each part of the grading rubric carefully, and provide an answer you're confident in.
 Your rubric is as follows:
 - hasCitations: Does the answer contain citations? Additionally, do the citation title's and URLs appear to be correct?
@@ -60,12 +70,16 @@ Your rubric is as follows:
 
 <Expected Answer>
 {expected_answer}
-</Expected Answer>`],
-["human", `Here is the answer to the question:
+</Expected Answer>`,
+    ],
+    [
+      "human",
+      `Here is the answer to the question:
 
 <Human Answer>
 {human_answer}
-</Human Answer>`]
+</Human Answer>`,
+    ],
   ]);
 
   const chain = prompt.pipe(modelWithTools);
@@ -82,13 +96,13 @@ Your rubric is as follows:
   }
   return {
     key: "gradingFunction", // TODO what should this actually be?
-    score,  
+    score,
     value: {
       has_citations: hasCitations,
       answers_question: answersQuestion,
       is_correct: isCorrect,
-    }
-  }
+    },
+  };
 }
 
 /**
@@ -104,13 +118,13 @@ async function runEvaluator(chain: Runnable, datasetName: string) {
     evaluationName: "Evaluate Generated Answers (E2E)",
     inputKey: "question", // The key of the question from the dataset
     answerKey: "output", // The key of the expected answer from the dataset
-    predictionKey: "finalOutputString" // The key of the generated answer from the ChatLangChain API
+    predictionKey: "finalOutputString", // The key of the generated answer from the ChatLangChain API
   });
 
   return runOnDataset(chain, datasetName, {
     evaluationConfig: {
       customEvaluators: [evaluator],
-    }
+    },
   });
 }
 
@@ -120,7 +134,10 @@ async function runEvaluator(chain: Runnable, datasetName: string) {
  * @param {{ question: string, chat_history: Array<BaseMessage> }} input
  * @returns {Promise<APIResult>} The final output string from the API
  */
-async function processExample(input: { question: string, chat_history: Array<BaseMessage> }): Promise<APIResult> {
+async function processExample(input: {
+  question: string;
+  chat_history: Array<BaseMessage>;
+}): Promise<APIResult> {
   const baseApiUrl = process.env.CHAT_LANGCHAINJS_API_URL;
   if (!baseApiUrl) {
     throw new Error("CHAT_LANGCHAINJS_API_URL is not set");
@@ -132,9 +149,10 @@ async function processExample(input: { question: string, chat_history: Array<Bas
   const llm = "openai_gpt_3_5_turbo";
 
   const sourceStepName = "FindDocs";
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let streamedResponse: Record<string, any> = {};
   const remoteChain = new RemoteRunnable({
-    url: streamLogUrl + "/chat",
+    url: `${streamLogUrl}/chat`,
     options: {
       timeout: 60000,
     },
@@ -152,22 +170,23 @@ async function processExample(input: { question: string, chat_history: Array<Bas
     },
     {
       includeNames: [sourceStepName],
-    },
+    }
   );
 
   let accumulatedMessage = "";
-  let sources: Source[] | undefined = undefined;
+  let sources: Source[] | undefined;
 
   // Handle the stream
   for await (const chunk of streamLog) {
     streamedResponse = applyPatch(streamedResponse, chunk.ops).newDocument;
     if (
       Array.isArray(
-        streamedResponse?.logs?.[sourceStepName]?.final_output?.output,
+        streamedResponse?.logs?.[sourceStepName]?.final_output?.output
       )
     ) {
       sources = streamedResponse.logs[
         sourceStepName
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ].final_output.output.map((doc: Record<string, any>) => ({
         url: doc.metadata.source,
         title: doc.metadata.title,
@@ -178,10 +197,12 @@ async function processExample(input: { question: string, chat_history: Array<Bas
     }
   }
 
-  const finalOutputString = `Final output: ${accumulatedMessage}\n\nSources: ${sources?.map((s) => `${s.title}: ${s.url}`).join("\n")}`;
+  const finalOutputString = `Final output: ${accumulatedMessage}\n\nSources: ${sources
+    ?.map((s) => `${s.title}: ${s.url}`)
+    .join("\n")}`;
   return {
     finalOutputString,
-  }
+  };
 }
 
 /**
@@ -195,8 +216,8 @@ export async function e2eEval() {
   }
 
   const chain = new RunnableLambda({
-    func: processExample
+    func: processExample,
   });
   const evalResult = await runEvaluator(chain, datasetName);
-  console.log(`Eval successfully completed!\nEval Result: ${evalResult}`)
+  console.log(`Eval successfully completed!\nEval Result: ${evalResult}`);
 }
