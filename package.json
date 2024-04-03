@@ -6,7 +6,8 @@
   "license": "MIT",
   "workspaces": [
     "backend",
-    "frontend"
+    "frontend",
+    "evals"
   ],
   "scripts": {
     "build": "yarn run turbo:command build",
@@ -15,6 +16,9 @@
     "lint:fix": "yarn run turbo:command lint:fix",
     "format": "yarn run turbo:command format",
     "format:check": "yarn run turbo:command format:check"
+  },
+  "resolutions": {
+    "@langchain/core": "0.1.52"
   },
   "devDependencies": {
     "turbo": "latest"

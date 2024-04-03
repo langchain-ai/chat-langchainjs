@@ -1,7 +1,7 @@
 {
-  "name": "backend",
+  "name": "evals",
   "version": "0.0.0",
-  "description": "Backend for Chat LangChainJS",
+  "description": "Evals for Chat LangChainJS",
   "type": "module",
   "engines": {
     "node": ">=18"
@@ -15,6 +15,7 @@
   "homepage": "https://github.com/langchain-ai/chat-langchainjs/tree/main/",
   "scripts": {
     "build": "yarn clean && tsup",
+    "start": "tsx --experimental-wasm-modules -r dotenv/config",
     "ingest:dev": "tsx --experimental-wasm-modules -r dotenv/config ./src/ingest.ts dotenv_config_path=.env.local",
     "ingest": "node ./dist/ingest.js",
     "lint:eslint": "NODE_OPTIONS=--max-old-space-size=4096 eslint --cache --ext .ts,.js src/",
@@ -30,13 +31,11 @@
   "dependencies": {
     "@langchain/community": "^0.0.27",
     "@langchain/core": "^0.1.52",
-    "@langchain/openai": "^0.0.14",
-    "@langchain/weaviate": "^0.0.1",
-    "cheerio": "^1.0.0-rc.12",
-    "jsdom": "^24.0.0",
+    "@langchain/openai": "^0.0.25",
     "langchain": "^0.1.17",
-    "pg": "^8.11.3",
-    "weaviate-ts-client": "^2.0.0"
+    "langsmith": "^0.1.14",
+    "ml-kmeans": "^6.0.0",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@jest/globals": "^29.5.0",

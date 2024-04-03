@@ -2795,22 +2795,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@langchain/core@npm:^0.1.26, @langchain/core@npm:^0.1.27, @langchain/core@npm:~0.1, @langchain/core@npm:~0.1.13, @langchain/core@npm:~0.1.16, @langchain/core@npm:~0.1.25":
-  version: 0.1.27
-  resolution: "@langchain/core@npm:0.1.27"
+"@langchain/core@npm:0.1.52":
+  version: 0.1.52
+  resolution: "@langchain/core@npm:0.1.52"
   dependencies:
     ansi-styles: ^5.0.0
     camelcase: 6
     decamelize: 1.2.0
     js-tiktoken: ^1.0.8
-    langsmith: ~0.0.48
+    langsmith: ~0.1.7
     ml-distance: ^4.0.0
     p-queue: ^6.6.2
     p-retry: 4
     uuid: ^9.0.0
     zod: ^3.22.4
     zod-to-json-schema: ^3.22.3
-  checksum: 23fe980e1301a8d96c63ae213b7b94a8cfc6f333cfb1e7ba03469c718c579eeedd1c53200d3eccac0e03016dc9e572b6a0727e9762b281ea8cb7c9a953ab4981
+  checksum: 7111d92e7fb818478556e3a4b35e53529b4d620169e4aad59bea89ba7d8b1efc2aa76eb3be6b01ff13b5f2589ec779af161553b79a563a14f59490862e06bca7
   languageName: node
   linkType: hard
 
@@ -2824,6 +2824,19 @@ __metadata:
     zod: ^3.22.4
     zod-to-json-schema: ^3.22.3
   checksum: bfaf344580d493e8296344da63d9227bf896d3755d36cb8c29ac6c9ac087f1de83e2520078d32f24f7a95bf78ff64c338e411423c734382106d90676ae035b7f
+  languageName: node
+  linkType: hard
+
+"@langchain/openai@npm:^0.0.25":
+  version: 0.0.25
+  resolution: "@langchain/openai@npm:0.0.25"
+  dependencies:
+    "@langchain/core": ~0.1.45
+    js-tiktoken: ^1.0.7
+    openai: ^4.26.0
+    zod: ^3.22.4
+    zod-to-json-schema: ^3.22.3
+  checksum: 53e75cc7e6acafbeb2644e6c2bc434d52512f2336a86c102964485153568acb945b5b9d55900dd235bb2f5124932b1316394452506b90e9c0a1ad1cce593827d
   languageName: node
   linkType: hard
 
@@ -4470,7 +4483,7 @@ __metadata:
   dependencies:
     "@jest/globals": ^29.5.0
     "@langchain/community": ^0.0.27
-    "@langchain/core": ^0.1.27
+    "@langchain/core": ^0.1.52
     "@langchain/openai": ^0.0.14
     "@langchain/scripts": ~0.0
     "@langchain/weaviate": ^0.0.1
@@ -4896,7 +4909,7 @@ __metadata:
     "@emotion/react": ^11.11.1
     "@emotion/styled": ^11.11.0
     "@langchain/community": ^0.0.27
-    "@langchain/core": ^0.1.26
+    "@langchain/core": ^0.1.52
     "@langchain/openai": ^0.0.14
     "@langchain/weaviate": ^0.0.1
     "@types/dompurify": ^3.0.5
@@ -6572,6 +6585,44 @@ __metadata:
   languageName: node
   linkType: hard
 
+"evals@workspace:evals":
+  version: 0.0.0-use.local
+  resolution: "evals@workspace:evals"
+  dependencies:
+    "@jest/globals": ^29.5.0
+    "@langchain/community": ^0.0.27
+    "@langchain/core": ^0.1.52
+    "@langchain/openai": ^0.0.25
+    "@langchain/scripts": ~0.0
+    "@swc/core": ^1.3.90
+    "@swc/jest": ^0.2.29
+    "@types/pg": ^8
+    "@typescript-eslint/eslint-plugin": ^6.21.0
+    "@typescript-eslint/parser": ^6.21.0
+    dotenv: ^16.4.1
+    dpdm: ^3.12.0
+    eslint: ^8.33.0
+    eslint-config-airbnb-base: ^15.0.0
+    eslint-config-prettier: ^8.6.0
+    eslint-plugin-import: ^2.27.5
+    eslint-plugin-jest: ^27.6.0
+    eslint-plugin-no-instanceof: ^1.0.1
+    eslint-plugin-prettier: ^4.2.1
+    jest: ^29.5.0
+    jest-environment-node: ^29.6.4
+    langchain: ^0.1.17
+    langsmith: ^0.1.14
+    ml-kmeans: ^6.0.0
+    prettier: ^2.8.3
+    release-it: ^15.10.1
+    rimraf: ^5.0.1
+    tsup: ^8.0.1
+    tsx: ^3.12.3
+    typescript: ~5.1.6
+    zod: ^3.22.4
+  languageName: unknown
+  linkType: soft
+
 "event-target-shim@npm:^5.0.0":
   version: 5.0.1
   resolution: "event-target-shim@npm:5.0.1"
@@ -7685,7 +7736,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"is-any-array@npm:^2.0.0":
+"is-any-array@npm:^2.0.0, is-any-array@npm:^2.0.1":
   version: 2.0.1
   resolution: "is-any-array@npm:2.0.1"
   checksum: 472ed80e17d32951435087951af30c29498b163c31bf723dd5af76545b100bcfac6fad2df3f1a648b45e3b027de8f5dc2389935267ba5258eae85762804b4982
@@ -9102,6 +9153,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"langsmith@npm:^0.1.14, langsmith@npm:~0.1.7":
+  version: 0.1.14
+  resolution: "langsmith@npm:0.1.14"
+  dependencies:
+    "@types/uuid": ^9.0.1
+    commander: ^10.0.1
+    p-queue: ^6.6.2
+    p-retry: 4
+    uuid: ^9.0.0
+  checksum: 8fb082c053a72e2a3c797b99622e612a5fe00fe3c8db97ff7cfc36ded9511ea4c4558ef404891962e82d9d2d2b1ffbb1a957db7dfb4c47fcc5e2f1f6074ec384
+  languageName: node
+  linkType: hard
+
 "langsmith@npm:~0.0.48, langsmith@npm:~0.0.59":
   version: 0.0.68
   resolution: "langsmith@npm:0.0.68"
@@ -9607,12 +9671,41 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ml-array-max@npm:^1.2.4":
+  version: 1.2.4
+  resolution: "ml-array-max@npm:1.2.4"
+  dependencies:
+    is-any-array: ^2.0.0
+  checksum: af59075eb6bf0076e179a075748f8f1a10f1d60f7ae55103035d5aca637ceb6a109e47bce28bfb82756c977652cbcad4d985e859cacd517edc8807f2e61f7abf
+  languageName: node
+  linkType: hard
+
 "ml-array-mean@npm:^1.1.6":
   version: 1.1.6
   resolution: "ml-array-mean@npm:1.1.6"
   dependencies:
     ml-array-sum: ^1.1.6
   checksum: 81999dac8bad3bf2dafb23a9bc71883879b9d55889e48d00b91dd4a2568957a6f5373632ae57324760d1e1d7d29ad45ab4ea7ae32de67ce144d57a21e36dd9c2
+  languageName: node
+  linkType: hard
+
+"ml-array-min@npm:^1.2.3":
+  version: 1.2.3
+  resolution: "ml-array-min@npm:1.2.3"
+  dependencies:
+    is-any-array: ^2.0.0
+  checksum: 7a09d5b4cf563a4743b69e5a395f6a617d6fd74ae5f35d0b77ca8ac9568d98b61249bd7d1f962a6e744726ebb94a6ece6e386a6e024ad0e9d329bce7e7e9f2c3
+  languageName: node
+  linkType: hard
+
+"ml-array-rescale@npm:^1.3.7":
+  version: 1.3.7
+  resolution: "ml-array-rescale@npm:1.3.7"
+  dependencies:
+    is-any-array: ^2.0.0
+    ml-array-max: ^1.2.4
+    ml-array-min: ^1.2.3
+  checksum: 7852a09cbc1f39ed625a93ba803ecc13438ddcae20961d7435fb0a89512b66e282b5ea0f425458813028f4004252ed40c6407b893d4b1910591c5aabc8e93810
   languageName: node
   linkType: hard
 
@@ -9643,6 +9736,46 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ml-kmeans@npm:^6.0.0":
+  version: 6.0.0
+  resolution: "ml-kmeans@npm:6.0.0"
+  dependencies:
+    ml-distance-euclidean: ^2.0.0
+    ml-matrix: ^6.9.0
+    ml-nearest-vector: ^2.0.1
+    ml-random: ^0.5.0
+  checksum: 2e82c0f32724d6c879f258121ec5029c6eb0556048ae312a9893461e6167917c7b0b8eef4dd9a60f122f97bdeaaf5ccda4f7dadce04b75d7a5c63511695a3085
+  languageName: node
+  linkType: hard
+
+"ml-matrix@npm:^6.9.0":
+  version: 6.11.0
+  resolution: "ml-matrix@npm:6.11.0"
+  dependencies:
+    is-any-array: ^2.0.1
+    ml-array-rescale: ^1.3.7
+  checksum: b3b2b56416fde12f9767ff19807e3059f8cf60c56350a338c00e0cabcf20a036d5824807d0f0006a478cda342d271a28ee17c02cee58cbbda2a0072a8839815c
+  languageName: node
+  linkType: hard
+
+"ml-nearest-vector@npm:^2.0.1":
+  version: 2.0.1
+  resolution: "ml-nearest-vector@npm:2.0.1"
+  dependencies:
+    ml-distance-euclidean: ^2.0.0
+  checksum: 1fc19f958002189dee9074b042525e1790930eecb5ddcf7817d366ca500ac80059b7da641dd6460ebba7d3f973548ea6712cbff66d369764ef1f9b3879fc03e2
+  languageName: node
+  linkType: hard
+
+"ml-random@npm:^0.5.0":
+  version: 0.5.0
+  resolution: "ml-random@npm:0.5.0"
+  dependencies:
+    ml-xsadd: ^2.0.0
+  checksum: 7f2cac8fa777c0c267d4af4933447936d96c7784e4f15d01a862465a29dbf3ef756ce7e283a51f7587cc7bda7d332957c3ac3df8ae59d731175b1b4f531f9624
+  languageName: node
+  linkType: hard
+
 "ml-tree-similarity@npm:^1.0.0":
   version: 1.0.0
   resolution: "ml-tree-similarity@npm:1.0.0"
@@ -9650,6 +9783,13 @@ __metadata:
     binary-search: ^1.3.5
     num-sort: ^2.0.0
   checksum: f99e217dc94acf75c089469dc3c278f388146e43c82212160b6b75daa14309902f84eb0a00c67d502fc79dc171cf15a33d392326e024b2e89881adc585d15513
+  languageName: node
+  linkType: hard
+
+"ml-xsadd@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "ml-xsadd@npm:2.0.0"
+  checksum: aacd9a986c1230b289c977815bddb0b77507f8e7b1b47076cf44dc58da84178e3f23fe945d2b4ca6e8abfb0aa199e2c7216b4fb92040b99fe642abb52862d0a2
   languageName: node
   linkType: hard
 
