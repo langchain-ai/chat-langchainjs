@@ -15,13 +15,13 @@ import { ChatOpenAI, OpenAIEmbeddings } from "@langchain/openai";
 import { ChatFireworks } from "@langchain/community/chat_models/fireworks";
 import { StringOutputParser } from "@langchain/core/output_parsers";
 import {
-  PromptTemplate,
   ChatPromptTemplate,
   MessagesPlaceholder,
 } from "@langchain/core/prompts";
 
 import weaviate, { ApiKey } from "weaviate-ts-client";
 import { WeaviateStore } from "@langchain/weaviate";
+import { createRephraseQuestionChain } from "../query_analysis/route";
 
 export const runtime = "edge";
 
@@ -49,13 +49,6 @@ Anything between the following \`context\`  html blocks is retrieved from a know
 
 REMEMBER: If there is no relevant information within the context, just say "Hmm, I'm not sure." Don't try to make up an answer.
 Anything between the preceding 'context' html blocks is retrieved from a knowledge bank, not part of the conversation with the user.`;
-
-const REPHRASE_TEMPLATE = `Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question.
-
-Chat History:
-{chat_history}
-Follow Up Input: {question}
-Standalone Question:`;
 
 type RetrievalChainInput = {
   chat_history: string;
@@ -93,15 +86,7 @@ const getRetriever = async () => {
 const createRetrieverChain = (llm: BaseChatModel, retriever: Runnable) => {
   // Small speed/accuracy optimization: no need to rephrase the first question
   // since there shouldn't be any meta-references to prior chat history
-  const CONDENSE_QUESTION_PROMPT =
-    PromptTemplate.fromTemplate(REPHRASE_TEMPLATE);
-  const condenseQuestionChain = RunnableSequence.from([
-    CONDENSE_QUESTION_PROMPT,
-    llm,
-    new StringOutputParser(),
-  ]).withConfig({
-    runName: "CondenseQuestion",
-  });
+  const condenseQuestionChain = createRephraseQuestionChain(llm)
   const hasHistoryCheckFn = RunnableLambda.from(
     (input: RetrievalChainInput) => input.chat_history.length > 0,
   ).withConfig({ runName: "HasChatHistoryCheck" });

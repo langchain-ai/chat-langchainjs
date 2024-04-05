@@ -33,7 +33,20 @@ const badRunIds = [
   "6ad30fdd-0523-4e44-8924-7a6a1fed718a",
 ];
 
-export const BLACKLISTED_RUN_IDS = badRunIds
+export const BLACKLISTED_RUN_IDS_THUMBS_DOWN = badRunIds
   .concat(questionableRunIds)
   .concat(datedQuestions)
   .concat(langgraphQuestions);
+
+export const BLACKLISTED_RUN_IDS_THUMBS_UP = [
+  "a6e16ac2-a2f8-4288-b65f-9aca396ba74f",
+  "f5fb9093-b97b-41d2-9f15-b506e2e46b1f",
+  "ec7197f5-7c72-434b-8dc8-620108a2051d",
+  "e948f215-a58a-4e86-88cf-fc0444404fb7",
+  "81ed0373-75eb-44fe-8752-0876435e711f",
+  "7dea74de-791d-4cc7-8d6a-15d83f1651d1",
+  "",
+  "",
+  "",
+  ""
+];

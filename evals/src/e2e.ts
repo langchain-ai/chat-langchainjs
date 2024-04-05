@@ -95,7 +95,7 @@ Your rubric is as follows:
     score = 1;
   }
   return {
-    key: "gradingFunction", // TODO what should this actually be?
+    key: "e2e",
     score,
     value: {
       has_citations: hasCitations,
@@ -210,9 +210,9 @@ async function processExample(input: {
  * Results are automatically uploaded to the dataset in LangSmith.
  */
 export async function e2eEval() {
-  const datasetName = process.env.LANGSMITH_DATASET_NAME;
+  const datasetName = process.env.LANGSMITH_E2E_DATASET_NAME;
   if (!datasetName) {
-    throw new Error("LANGSMITH_DATASET_NAME is not set");
+    throw new Error("LANGSMITH_E2E_DATASET_NAME is not set");
   }
 
   const chain = new RunnableLambda({

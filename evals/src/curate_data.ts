@@ -5,7 +5,7 @@
  * Send questions to claude opus and have it pick da bestest ones!
  */
 import { Client, Run } from "langsmith";
-import { BLACKLISTED_RUN_IDS } from "./blacklisted_run_ids.js";
+import { BLACKLISTED_RUN_IDS_THUMBS_DOWN, BLACKLISTED_RUN_IDS_THUMBS_UP } from "./blacklisted_run_ids.js";
 
 const client = new Client();
 
@@ -13,11 +13,12 @@ const client = new Client();
  * Gets all runs with thumbs down feedback from LangSmith
  * @returns {Promise<Run[]>} - List of runs with thumbs down feedback
  */
-async function loadDataset(): Promise<Run[]> {
+async function loadDataset(thumbsUp: boolean): Promise<Run[]> {
   const runs: Run[] = [];
+  const score = thumbsUp ? 1 : 0;
   for await (const run of client.listRuns({
     projectName: "chat-langchainjs",
-    filter: `and(eq(feedback_key, "user_score"), eq(feedback_score, 0))`,
+    filter: `and(eq(feedback_key, "user_score"), eq(feedback_score, ${score}))`,
   })) {
     runs.push(run);
   }
@@ -39,7 +40,7 @@ function filterDuplicatesAndBlacklistedQuestions(runs: Run[]) {
     return true;
   });
   const runsNotBlacklisted = uniqueRuns.filter(
-    (run) => !BLACKLISTED_RUN_IDS.includes(run.id)
+    (run) => !BLACKLISTED_RUN_IDS_THUMBS_DOWN.includes(run.id) && !BLACKLISTED_RUN_IDS_THUMBS_UP.includes(run.id)
   );
   console.log(
     `Found ${runsNotBlacklisted.length} unique and not blacklisted runs`
@@ -74,11 +75,7 @@ function filterWithChatHistory(runs: Run[]): Run[] {
  * @param runs
  */
 async function createAndUploadDataset(runs: Run[]) {
-  await client.deleteDataset({
-    datasetId: "60bae478-639c-467b-8c74-bed79ddf69cd",
-  });
-
-  const dataset = await client.createDataset("chat-langchainjs-eval-qa-pairs", {
+  const dataset = await client.createDataset("chat-langchainjs-eval-thumps-up", {
     description:
       "A question-answer pair dataset for the Chat LangChain.js project. Uses real q/a pairs from runs which received thumbs down feedback.",
   });
@@ -108,12 +105,10 @@ async function createAndUploadDataset(runs: Run[]) {
 }
 
 async function curateData() {
-  const runs = await loadDataset();
-  console.log("runs.length", runs.length);
+  const runs = await loadDataset(true);
   const runsWithoutHistory = filterWithChatHistory(runs);
   const filteredQuestions =
     filterDuplicatesAndBlacklistedQuestions(runsWithoutHistory);
-  console.log("filteredQuestions.length", filteredQuestions.length);
   await createAndUploadDataset(filteredQuestions);
 }
 curateData().catch(console.error);
