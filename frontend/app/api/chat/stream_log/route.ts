@@ -86,7 +86,7 @@ const getRetriever = async () => {
 const createRetrieverChain = (llm: BaseChatModel, retriever: Runnable) => {
   // Small speed/accuracy optimization: no need to rephrase the first question
   // since there shouldn't be any meta-references to prior chat history
-  const condenseQuestionChain = createRephraseQuestionChain(llm)
+  const condenseQuestionChain = createRephraseQuestionChain(llm);
   const hasHistoryCheckFn = RunnableLambda.from(
     (input: RetrievalChainInput) => input.chat_history.length > 0,
   ).withConfig({ runName: "HasChatHistoryCheck" });

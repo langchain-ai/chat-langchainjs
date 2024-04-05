@@ -5,7 +5,10 @@
  * Send questions to claude opus and have it pick da bestest ones!
  */
 import { Client, Run } from "langsmith";
-import { BLACKLISTED_RUN_IDS_THUMBS_DOWN, BLACKLISTED_RUN_IDS_THUMBS_UP } from "./blacklisted_run_ids.js";
+import {
+  BLACKLISTED_RUN_IDS_THUMBS_DOWN,
+  BLACKLISTED_RUN_IDS_THUMBS_UP,
+} from "./blacklisted_run_ids.js";
 
 const client = new Client();
 
@@ -40,7 +43,9 @@ function filterDuplicatesAndBlacklistedQuestions(runs: Run[]) {
     return true;
   });
   const runsNotBlacklisted = uniqueRuns.filter(
-    (run) => !BLACKLISTED_RUN_IDS_THUMBS_DOWN.includes(run.id) && !BLACKLISTED_RUN_IDS_THUMBS_UP.includes(run.id)
+    (run) =>
+      !BLACKLISTED_RUN_IDS_THUMBS_DOWN.includes(run.id) &&
+      !BLACKLISTED_RUN_IDS_THUMBS_UP.includes(run.id)
   );
   console.log(
     `Found ${runsNotBlacklisted.length} unique and not blacklisted runs`
@@ -75,10 +80,13 @@ function filterWithChatHistory(runs: Run[]): Run[] {
  * @param runs
  */
 async function createAndUploadDataset(runs: Run[]) {
-  const dataset = await client.createDataset("chat-langchainjs-eval-thumps-up", {
-    description:
-      "A question-answer pair dataset for the Chat LangChain.js project. Uses real q/a pairs from runs which received thumbs down feedback.",
-  });
+  const dataset = await client.createDataset(
+    "chat-langchainjs-eval-thumps-up",
+    {
+      description:
+        "A question-answer pair dataset for the Chat LangChain.js project. Uses real q/a pairs from runs which received thumbs down feedback.",
+    }
+  );
 
   const examples: {
     inputs: { [key: string]: string }[];

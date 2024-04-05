@@ -5,11 +5,15 @@ import { Runnable, RunnableLambda } from "@langchain/core/runnables";
 import { ChatOpenAI } from "@langchain/openai";
 import { ChatPromptTemplate } from "langchain/prompts";
 import { runOnDataset } from "langchain/smith";
-import { GradingFunctionParams, GradingFunctionResult, StringEvaluator } from "langsmith/evaluation";
+import {
+  GradingFunctionParams,
+  GradingFunctionResult,
+  StringEvaluator,
+} from "langsmith/evaluation";
 import { z } from "zod";
 
 /**
- * Grading function for query analysis. Given an original query, and a predicted 
+ * Grading function for query analysis. Given an original query, and a predicted
  * query along with chat history, grade the predicted query.
  * @param {GradingFunctionParams} params The params used to grade the query analysis.
  * @returns {Promise<GradingFunctionResult>} The result of the grading function
@@ -24,7 +28,9 @@ async function gradingFunction(
   const schema = z.object({
     relevant: z
       .boolean()
-      .describe("Whether or not the query is relevant to the chat history and original query."),
+      .describe(
+        "Whether or not the query is relevant to the chat history and original query."
+      ),
     clear: z
       .boolean()
       .describe(
@@ -39,16 +45,16 @@ async function gradingFunction(
       .boolean()
       .describe(
         "Check if the generated query takes into account the context of the conversation and the user's chat history."
-      )
-    });
+      ),
+  });
 
-      const modelWithTools = model.withStructuredOutput(schema, {
-        name: "gradingFunction",
-      });
-      const prompt = ChatPromptTemplate.fromMessages([
-        [
-          "system",
-          `You are an expert software engineer, tasked with grading a generated query, based on the users original query and chat history.
+  const modelWithTools = model.withStructuredOutput(schema, {
+    name: "gradingFunction",
+  });
+  const prompt = ChatPromptTemplate.fromMessages([
+    [
+      "system",
+      `You are an expert software engineer, tasked with grading a generated query, based on the users original query and chat history.
 You should think through each part of the grading rubric carefully, and provide an answer you're confident in.
 Your rubric is as follows:
 - relevant: Whether or not the query is relevant to the chat history and original query.
@@ -75,24 +81,25 @@ Your rubric is as follows:
   ]);
 
   const [original_query, chat_history] = params.input.split("|||");
-    
-    const chain = prompt.pipe(modelWithTools);
-    const { relevant, clear, specific, context_aware } = await chain.invoke({
-      original_query,
-      chat_history,
-      generated_question: params.prediction,
-    });
-    // Convert all booleans to scores
-    const relevantScore = relevant ? 1 : 0;
-    const clearScore = clear ? 1 : 0;
-    const specificScore = specific ? 1 : 0;
-    const contextAwareScore = context_aware ? 1 : 0;
-    // Calculate the score
-    const score = (relevantScore + clearScore + specificScore + contextAwareScore) / 4;
-    return {
-      key: "query_analysis",
-      score,
-    };
+
+  const chain = prompt.pipe(modelWithTools);
+  const { relevant, clear, specific, context_aware } = await chain.invoke({
+    original_query,
+    chat_history,
+    generated_question: params.prediction,
+  });
+  // Convert all booleans to scores
+  const relevantScore = relevant ? 1 : 0;
+  const clearScore = clear ? 1 : 0;
+  const specificScore = specific ? 1 : 0;
+  const contextAwareScore = context_aware ? 1 : 0;
+  // Calculate the score
+  const score =
+    (relevantScore + clearScore + specificScore + contextAwareScore) / 4;
+  return {
+    key: "query_analysis",
+    score,
+  };
 }
 
 async function runEvaluator(chain: Runnable, datasetName: string) {
@@ -115,8 +122,8 @@ async function runEvaluator(chain: Runnable, datasetName: string) {
  * Define a func which will call the QA function to generate yo!
  */
 async function generateQueries(input: {
-  question: string,
-  chat_history: Array<BaseMessage>,
+  question: string;
+  chat_history: Array<BaseMessage>;
 }) {
   const baseApiUrl = process.env.CHAT_LANGCHAINJS_API_URL;
   if (!baseApiUrl) {
@@ -127,7 +134,10 @@ async function generateQueries(input: {
   const queryAnalysisUrl = queryAnalysisApiUrl.toString();
 
   const llm = "openai_gpt_3_5_turbo";
-  const formatChatHistory = (chat_history: Array<BaseMessage>): string => chat_history.map((message) => `${message._getType()}: ${message.content}`).join("\n")
+  const formatChatHistory = (chat_history: Array<BaseMessage>): string =>
+    chat_history
+      .map((message) => `${message._getType()}: ${message.content}`)
+      .join("\n");
   const chatHistoryString = formatChatHistory(input.chat_history);
 
   const res = await fetch(queryAnalysisUrl, {
@@ -154,9 +164,8 @@ async function generateQueries(input: {
   const queryAnalysisResult: string = await res.json();
   return {
     rephrasedQuery: queryAnalysisResult,
-  }
+  };
 }
-
 
 export async function queryAnalysisEval() {
   const datasetName = process.env.LANGSMITH_QA_DATASET_NAME;
