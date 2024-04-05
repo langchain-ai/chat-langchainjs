@@ -8,7 +8,7 @@ import { Client, Run } from "langsmith";
 import {
   BLACKLISTED_RUN_IDS_THUMBS_DOWN,
   BLACKLISTED_RUN_IDS_THUMBS_UP,
-} from "./blacklisted_run_ids.js";
+} from "../blacklisted_run_ids.js";
 
 const client = new Client();
 
