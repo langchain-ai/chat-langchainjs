@@ -1,15 +1,10 @@
 /* eslint-disable no-process-env */
 
-import { BaseMessage } from "@langchain/core/messages";
 import { Runnable, RunnableLambda } from "@langchain/core/runnables";
 import { ChatOpenAI } from "@langchain/openai";
-import { ChatPromptTemplate } from "langchain/prompts";
-import { runOnDataset } from "langchain/smith";
-import {
-  GradingFunctionParams,
-  GradingFunctionResult,
-  StringEvaluator,
-} from "langsmith/evaluation";
+import { ChatPromptTemplate } from "@langchain/core/prompts";
+import { DynamicRunEvaluatorParams, runOnDataset } from "langchain/smith";
+import { EvaluationResult } from "langsmith/evaluation";
 import { z } from "zod";
 
 /**
@@ -19,10 +14,15 @@ import { z } from "zod";
  * @returns {Promise<GradingFunctionResult>} The result of the grading function
  */
 async function gradingFunction(
-  params: GradingFunctionParams
-): Promise<GradingFunctionResult> {
+  props: DynamicRunEvaluatorParams
+): Promise<EvaluationResult> {
+  if (!props.run.outputs) {
+    throw new Error("Failed to get outputs from run");
+  }
+  const { question, chat_history } = props.run.inputs;
+  const { rephrasedQuery } = props.run.outputs;
   const model = new ChatOpenAI({
-    modelName: "gpt-4-turbo",
+    modelName: "gpt-4-turbo-preview",
     temperature: 0,
   });
   const schema = z.object({
@@ -80,13 +80,11 @@ Your rubric is as follows:
     ],
   ]);
 
-  const [original_query, chat_history] = params.input.split("|||");
-
   const chain = prompt.pipe(modelWithTools);
   const { relevant, clear, specific, context_aware } = await chain.invoke({
-    original_query,
+    original_query: question,
     chat_history,
-    generated_question: params.prediction,
+    generated_question: rephrasedQuery,
   });
   // Convert all booleans to scores
   const relevantScore = relevant ? 1 : 0;
@@ -99,21 +97,19 @@ Your rubric is as follows:
   return {
     key: "query_analysis",
     score,
+    value: {
+      relevant,
+      clear,
+      specific,
+      context_aware,
+    },
   };
 }
 
 async function runEvaluator(chain: Runnable, datasetName: string) {
-  const evaluator = new StringEvaluator({
-    gradingFunction,
-    evaluationName: "Evaluate Query Analysis",
-    inputKey: "question_and_chat_history", // The key of the question, along with chat history
-    answerKey: "output", // The key of the expected answer from the dataset
-    predictionKey: "rephrased_query", // The key of the generated answer from the ChatLangChain API
-  });
-
   return runOnDataset(chain, datasetName, {
     evaluationConfig: {
-      customEvaluators: [evaluator],
+      customEvaluators: [gradingFunction],
     },
   });
 }
@@ -123,22 +119,17 @@ async function runEvaluator(chain: Runnable, datasetName: string) {
  */
 async function generateQueries(input: {
   question: string;
-  chat_history: Array<BaseMessage>;
+  chat_history: string;
 }) {
   const baseApiUrl = process.env.CHAT_LANGCHAINJS_API_URL;
   if (!baseApiUrl) {
     throw new Error("CHAT_LANGCHAINJS_API_URL is not set");
   }
   const queryAnalysisApiUrl = new URL(baseApiUrl);
-  queryAnalysisApiUrl.pathname = "/api";
+  queryAnalysisApiUrl.pathname = "/api/chat/query_analysis";
   const queryAnalysisUrl = queryAnalysisApiUrl.toString();
 
   const llm = "openai_gpt_3_5_turbo";
-  const formatChatHistory = (chat_history: Array<BaseMessage>): string =>
-    chat_history
-      .map((message) => `${message._getType()}: ${message.content}`)
-      .join("\n");
-  const chatHistoryString = formatChatHistory(input.chat_history);
 
   const res = await fetch(queryAnalysisUrl, {
     method: "POST",
@@ -146,10 +137,7 @@ async function generateQueries(input: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      input: {
-        question: input.question,
-        chat_history: chatHistoryString,
-      },
+      input,
       config: {
         configurable: {
           llm,
@@ -161,9 +149,9 @@ async function generateQueries(input: {
   if (!res.ok) {
     throw new Error(`Failed to generate queries: ${res.statusText}`);
   }
-  const queryAnalysisResult: string = await res.json();
+  const rephrasedQuery = await res.text();
   return {
-    rephrasedQuery: queryAnalysisResult,
+    rephrasedQuery,
   };
 }
 
@@ -177,5 +165,12 @@ export async function queryAnalysisEval() {
     func: generateQueries,
   });
   const evalResult = await runEvaluator(chain, datasetName);
-  console.log(`Eval successfully completed!\nEval Result: ${evalResult}`);
+  console.log(
+    `Eval successfully completed!\nEval Result: ${JSON.stringify(
+      evalResult,
+      null,
+      2
+    )}`
+  );
 }
+queryAnalysisEval().catch(console.error);

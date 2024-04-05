@@ -57,7 +57,6 @@ export async function POST(req: NextRequest) {
     }
 
     const rephraseQuestionChain = createRephraseQuestionChain(llm);
-
     const rephrasedQuery = await rephraseQuestionChain.invoke({
       question: input.question,
       chat_history: input.chat_history,
