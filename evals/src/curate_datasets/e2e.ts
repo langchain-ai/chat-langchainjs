@@ -1,14 +1,7 @@
-/**
- * Fetch all thumbs down runs from the database within the last two months
- * Filter by keywords (look through lance notebook)
- * Filter out outliers by token sizes
- * Send questions to claude opus and have it pick da bestest ones!
- */
+/* eslint-disable no-process-env */
+
 import { Client, Run } from "langsmith";
-import {
-  BLACKLISTED_RUN_IDS_THUMBS_DOWN,
-  BLACKLISTED_RUN_IDS_THUMBS_UP,
-} from "../blacklisted_run_ids.js";
+import { E2E_BLACKLISTED_RUN_IDS } from "./blacklisted_run_ids.js";
 
 const client = new Client();
 
@@ -43,9 +36,7 @@ function filterDuplicatesAndBlacklistedQuestions(runs: Run[]) {
     return true;
   });
   const runsNotBlacklisted = uniqueRuns.filter(
-    (run) =>
-      !BLACKLISTED_RUN_IDS_THUMBS_DOWN.includes(run.id) &&
-      !BLACKLISTED_RUN_IDS_THUMBS_UP.includes(run.id)
+    (run) => !E2E_BLACKLISTED_RUN_IDS.includes(run.id)
   );
   console.log(
     `Found ${runsNotBlacklisted.length} unique and not blacklisted runs`
@@ -79,14 +70,11 @@ function filterWithChatHistory(runs: Run[]): Run[] {
  * Given a list of runs, construct a dataset to upload to langsmith
  * @param runs
  */
-async function createAndUploadDataset(runs: Run[]) {
-  const dataset = await client.createDataset(
-    "chat-langchainjs-eval-thumps-up",
-    {
-      description:
-        "A question-answer pair dataset for the Chat LangChain.js project. Uses real q/a pairs from runs which received thumbs down feedback.",
-    }
-  );
+async function createAndUploadDataset(runs: Run[], datasetName: string) {
+  const dataset = await client.createDataset(datasetName, {
+    description:
+      "A question-answer pair dataset for the Chat LangChain.js project. Uses real q/a pairs from runs which received thumbs down feedback.",
+  });
 
   const examples: {
     inputs: { [key: string]: string }[];
@@ -113,10 +101,15 @@ async function createAndUploadDataset(runs: Run[]) {
 }
 
 async function curateData() {
+  const datasetName = process.env.LANGSMITH_E2E_DATASET_NAME;
+  if (!datasetName) {
+    throw new Error("LANGSMITH_E2E_DATASET_NAME is not set");
+  }
+
   const runs = await loadDataset(true);
   const runsWithoutHistory = filterWithChatHistory(runs);
   const filteredQuestions =
     filterDuplicatesAndBlacklistedQuestions(runsWithoutHistory);
-  await createAndUploadDataset(filteredQuestions);
+  await createAndUploadDataset(filteredQuestions, datasetName);
 }
 curateData().catch(console.error);

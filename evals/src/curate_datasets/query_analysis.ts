@@ -1,10 +1,7 @@
-/**
- * Fetch all thumbs down runs from the database within the last two months
- * Filter by keywords (look through lance notebook)
- * Filter out outliers by token sizes
- * Send questions to claude opus and have it pick da bestest ones!
- */
+/* eslint-disable no-process-env */
+
 import { Client, Run } from "langsmith";
+import { QA_BLACKLISTED_RUN_IDS } from "./blacklisted_run_ids.js";
 
 const client = new Client();
 
@@ -64,8 +61,18 @@ async function createAndUploadDataset(runs: Run[]) {
   console.log(`Created a dataset with ${examples.inputs.length} examples.`);
 }
 
+function filterBlacklistedRuns(runs: Run[]): Run[] {
+  return runs.filter((run) => !QA_BLACKLISTED_RUN_IDS.includes(run.id));
+}
+
 async function curateData() {
+  const datasetName = process.env.LANGSMITH_QA_DATASET_NAME;
+  if (!datasetName) {
+    throw new Error("LANGSMITH_QA_DATASET_NAME is not set");
+  }
+
   const runs = await loadDataset(true);
-  await createAndUploadDataset(runs);
+  const filteredRuns = filterBlacklistedRuns(runs);
+  await createAndUploadDataset(filteredRuns);
 }
 curateData().catch(console.error);
