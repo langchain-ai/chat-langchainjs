@@ -4,13 +4,11 @@ import { RemoteRunnable } from "@langchain/core/runnables/remote";
 import { applyPatch } from "@langchain/core/utils/json_patch";
 import { ChatOpenAI } from "@langchain/openai";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
-import { Runnable, RunnableLambda } from "@langchain/core/runnables";
+import { RunnableLambda } from "@langchain/core/runnables";
 import { BaseMessage } from "@langchain/core/messages";
-import { runOnDataset } from "langchain/smith";
+import { DynamicRunEvaluatorParams, runOnDataset } from "langchain/smith";
 import {
-  GradingFunctionParams,
-  GradingFunctionResult,
-  StringEvaluator,
+  EvaluationResult,
 } from "langsmith/evaluation";
 import { z } from "zod";
 
@@ -30,10 +28,19 @@ type APIResult = {
  * @returns {Promise<GradingFunctionResult>} The result of the grading function
  */
 async function gradingFunction(
-  params: GradingFunctionParams
-): Promise<GradingFunctionResult> {
+  props: DynamicRunEvaluatorParams
+): Promise<EvaluationResult> {
+  if (!props.run.outputs) {
+    throw new Error("Failed to get outputs from run");
+  }
+  if (!props.example?.outputs) {
+    throw new Error("No example outputs found")
+  }
+  const { question } = props.run.inputs;
+  const { output: expectedOutput } = props.example.outputs
+  const { finalOutputString: generatedAnswer } = props.run.outputs;
   const model = new ChatOpenAI({
-    modelName: "gpt-4-turbo",
+    modelName: "gpt-4-turbo-preview",
     temperature: 0,
   });
   const schema = z.object({
@@ -84,18 +91,22 @@ Your rubric is as follows:
 
   const chain = prompt.pipe(modelWithTools);
   const { hasCitations, answersQuestion, isCorrect } = await chain.invoke({
-    question: params.input,
-    expected_answer: params.answer ?? "",
-    human_answer: params.prediction,
+    question,
+    expected_answer: expectedOutput,
+    human_answer: generatedAnswer,
   });
+
   // Assign weights to the grades and calculate a score.
-  let score = 0;
-  if (hasCitations && answersQuestion && isCorrect) {
-    // If all of the above are true, the score is 1 (true).
-    score = 1;
-  }
+  const hasCitationsWeight = 0.2
+  const answersQuestionWeight = 0.4
+  const isCorrectWeight = 0.4
+  const hasCitationsValue = hasCitations ? 1 : 0
+  const answersQuestionValue = answersQuestion ? 1 : 0
+  const isCorrectValue = isCorrect ? 1 : 0
+  const score = (hasCitationsValue * hasCitationsWeight) + (answersQuestionValue * answersQuestionWeight) + (isCorrectValue * isCorrectWeight)
+
   return {
-    key: "e2e",
+    key: "End 2 End",
     score,
     value: {
       has_citations: hasCitations,
@@ -103,29 +114,6 @@ Your rubric is as follows:
       is_correct: isCorrect,
     },
   };
-}
-
-/**
- * Run the evaluator on a chain (the Chat LangChain API), and automatically
- * have the results saved to the dataset.
- * @param {Runnable} chain A chain to run the evaluator on
- * @param {string} datasetName The name of the dataset to save the results to
- * @returns {Promise<EvalResults>} The result of the evaluation
- */
-async function runEvaluator(chain: Runnable, datasetName: string) {
-  const evaluator = new StringEvaluator({
-    gradingFunction,
-    evaluationName: "Evaluate Generated Answers (E2E)",
-    inputKey: "question", // The key of the question from the dataset
-    answerKey: "output", // The key of the expected answer from the dataset
-    predictionKey: "finalOutputString", // The key of the generated answer from the ChatLangChain API
-  });
-
-  return runOnDataset(chain, datasetName, {
-    evaluationConfig: {
-      customEvaluators: [evaluator],
-    },
-  });
 }
 
 /**
@@ -218,6 +206,11 @@ export async function e2eEval() {
   const chain = new RunnableLambda({
     func: processExample,
   });
-  const evalResult = await runEvaluator(chain, datasetName);
-  console.log(`Eval successfully completed!\nEval Result: ${evalResult}`);
+  const evalResult = await runOnDataset(chain, datasetName, {
+    evaluationConfig: {
+      customEvaluators: [gradingFunction],
+    },
+  });
+  console.log(`Eval successfully completed!\nEval Result: ${JSON.stringify(evalResult, null, 2)}`);
 }
+e2eEval().catch(console.error);

@@ -1,6 +1,6 @@
 /* eslint-disable no-process-env */
 
-import { Runnable, RunnableLambda } from "@langchain/core/runnables";
+import { RunnableLambda } from "@langchain/core/runnables";
 import { ChatOpenAI } from "@langchain/openai";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { DynamicRunEvaluatorParams, runOnDataset } from "langchain/smith";
@@ -19,7 +19,11 @@ async function gradingFunction(
   if (!props.run.outputs) {
     throw new Error("Failed to get outputs from run");
   }
+  if (!props.example?.outputs) {
+    throw new Error("No example outputs found")
+  }
   const { question, chat_history } = props.run.inputs;
+  const { output: expectedOutput } = props.example.outputs
   const { rephrasedQuery } = props.run.outputs;
   const model = new ChatOpenAI({
     modelName: "gpt-4-turbo-preview",
@@ -68,11 +72,16 @@ Your rubric is as follows:
 
 <Chat History>
 {chat_history}
-</Chat History>`,
+</Chat History>
+
+Here is an example of a high scoring generated query:
+<High Scoring Query>
+{high_scoring_query}
+</High Scoring Query>`,
     ],
     [
       "human",
-      `Here is the answer to the question:
+      `Here is the generated query:
 
 <Human Answer>
 {generated_question}
@@ -84,6 +93,7 @@ Your rubric is as follows:
   const { relevant, clear, specific, context_aware } = await chain.invoke({
     original_query: question,
     chat_history,
+    high_scoring_query: expectedOutput,
     generated_question: rephrasedQuery,
   });
   // Convert all booleans to scores
@@ -104,14 +114,6 @@ Your rubric is as follows:
       context_aware,
     },
   };
-}
-
-async function runEvaluator(chain: Runnable, datasetName: string) {
-  return runOnDataset(chain, datasetName, {
-    evaluationConfig: {
-      customEvaluators: [gradingFunction],
-    },
-  });
 }
 
 /**
@@ -164,7 +166,11 @@ export async function queryAnalysisEval() {
   const chain = new RunnableLambda({
     func: generateQueries,
   });
-  const evalResult = await runEvaluator(chain, datasetName);
+  const evalResult = await runOnDataset(chain, datasetName, {
+    evaluationConfig: {
+      customEvaluators: [gradingFunction],
+    },
+  });
   console.log(
     `Eval successfully completed!\nEval Result: ${JSON.stringify(
       evalResult,
