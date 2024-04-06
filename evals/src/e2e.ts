@@ -7,9 +7,7 @@ import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { RunnableLambda } from "@langchain/core/runnables";
 import { BaseMessage } from "@langchain/core/messages";
 import { DynamicRunEvaluatorParams, runOnDataset } from "langchain/smith";
-import {
-  EvaluationResult,
-} from "langsmith/evaluation";
+import { EvaluationResult } from "langsmith/evaluation";
 import { z } from "zod";
 
 type Source = {
@@ -34,10 +32,10 @@ async function gradingFunction(
     throw new Error("Failed to get outputs from run");
   }
   if (!props.example?.outputs) {
-    throw new Error("No example outputs found")
+    throw new Error("No example outputs found");
   }
   const { question } = props.run.inputs;
-  const { output: expectedOutput } = props.example.outputs
+  const { output: expectedOutput } = props.example.outputs;
   const { finalOutputString: generatedAnswer } = props.run.outputs;
   const model = new ChatOpenAI({
     modelName: "gpt-4-turbo-preview",
@@ -97,13 +95,16 @@ Your rubric is as follows:
   });
 
   // Assign weights to the grades and calculate a score.
-  const hasCitationsWeight = 0.2
-  const answersQuestionWeight = 0.4
-  const isCorrectWeight = 0.4
-  const hasCitationsValue = hasCitations ? 1 : 0
-  const answersQuestionValue = answersQuestion ? 1 : 0
-  const isCorrectValue = isCorrect ? 1 : 0
-  const score = (hasCitationsValue * hasCitationsWeight) + (answersQuestionValue * answersQuestionWeight) + (isCorrectValue * isCorrectWeight)
+  const hasCitationsWeight = 0.2;
+  const answersQuestionWeight = 0.4;
+  const isCorrectWeight = 0.4;
+  const hasCitationsValue = hasCitations ? 1 : 0;
+  const answersQuestionValue = answersQuestion ? 1 : 0;
+  const isCorrectValue = isCorrect ? 1 : 0;
+  const score =
+    hasCitationsValue * hasCitationsWeight +
+    answersQuestionValue * answersQuestionWeight +
+    isCorrectValue * isCorrectWeight;
 
   return {
     key: "End 2 End",
@@ -211,6 +212,12 @@ export async function e2eEval() {
       customEvaluators: [gradingFunction],
     },
   });
-  console.log(`Eval successfully completed!\nEval Result: ${JSON.stringify(evalResult, null, 2)}`);
+  console.log(
+    `Eval successfully completed!\nEval Result: ${JSON.stringify(
+      evalResult,
+      null,
+      2
+    )}`
+  );
 }
 e2eEval().catch(console.error);

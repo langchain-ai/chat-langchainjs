@@ -20,10 +20,10 @@ async function gradingFunction(
     throw new Error("Failed to get outputs from run");
   }
   if (!props.example?.outputs) {
-    throw new Error("No example outputs found")
+    throw new Error("No example outputs found");
   }
   const { question, chat_history } = props.run.inputs;
-  const { output: expectedOutput } = props.example.outputs
+  const { output: expectedOutput } = props.example.outputs;
   const { rephrasedQuery } = props.run.outputs;
   const model = new ChatOpenAI({
     modelName: "gpt-4-turbo-preview",
