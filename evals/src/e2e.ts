@@ -16,7 +16,8 @@ type Source = {
 };
 
 type APIResult = {
-  finalOutputString: string;
+  finalGeneration: string;
+  sources: Source[] | undefined;
 };
 
 /**
@@ -25,7 +26,7 @@ type APIResult = {
  * @param {GradingFunctionParams} params The input, prediction, and answer to grade
  * @returns {Promise<GradingFunctionResult>} The result of the grading function
  */
-async function gradingFunction(
+async function gradeFinalAnswer(
   props: DynamicRunEvaluatorParams
 ): Promise<EvaluationResult> {
   if (!props.run.outputs) {
@@ -35,16 +36,13 @@ async function gradingFunction(
     throw new Error("No example outputs found");
   }
   const { question } = props.run.inputs;
+  const { finalGeneration: generatedAnswer } = props.run.outputs as APIResult;
   const { output: expectedOutput } = props.example.outputs;
-  const { finalOutputString: generatedAnswer } = props.run.outputs;
   const model = new ChatOpenAI({
     modelName: "gpt-4-turbo-preview",
     temperature: 0,
   });
   const schema = z.object({
-    hasCitations: z
-      .boolean()
-      .describe("Whether or not the answer contains citations."),
     answersQuestion: z
       .boolean()
       .describe(
@@ -65,7 +63,6 @@ async function gradingFunction(
       `You are an expert software engineer, tasked with grading the answer to a question.
 You should think through each part of the grading rubric carefully, and provide an answer you're confident in.
 Your rubric is as follows:
-- hasCitations: Does the answer contain citations? Additionally, do the citation title's and URLs appear to be correct?
 - answersQuestion: Does the answer actually answer the question?
 - isCorrect: Is the answer correct? Use the expected answer as context to answer this.
 
@@ -88,31 +85,39 @@ Your rubric is as follows:
   ]);
 
   const chain = prompt.pipe(modelWithTools);
-  const { hasCitations, answersQuestion, isCorrect } = await chain.invoke({
+  const { answersQuestion, isCorrect } = await chain.invoke({
     question,
     expected_answer: expectedOutput,
     human_answer: generatedAnswer,
   });
 
-  // Assign weights to the grades and calculate a score.
-  const hasCitationsWeight = 0.2;
-  const answersQuestionWeight = 0.4;
-  const isCorrectWeight = 0.4;
-  const hasCitationsValue = hasCitations ? 1 : 0;
   const answersQuestionValue = answersQuestion ? 1 : 0;
   const isCorrectValue = isCorrect ? 1 : 0;
-  const score =
-    hasCitationsValue * hasCitationsWeight +
-    answersQuestionValue * answersQuestionWeight +
-    isCorrectValue * isCorrectWeight;
+  const score = (answersQuestionValue + isCorrectValue) / 2;
 
   return {
     key: "End 2 End",
     score,
     value: {
-      has_citations: hasCitations,
       answers_question: answersQuestion,
       is_correct: isCorrect,
+    },
+  };
+}
+
+function gradeReturnedSources(
+  props: DynamicRunEvaluatorParams
+): EvaluationResult {
+  if (!props.run.outputs) {
+    throw new Error("Failed to get outputs from run");
+  }
+  const { sources } = props.run.outputs as APIResult;
+  const score = sources && sources.length > 0 ? 1 : 0;
+  return {
+    key: "Has Sources",
+    score,
+    value: {
+      source_count: sources?.length,
     },
   };
 }
@@ -186,11 +191,9 @@ async function processExample(input: {
     }
   }
 
-  const finalOutputString = `Final output: ${accumulatedMessage}\n\nSources: ${sources
-    ?.map((s) => `${s.title}: ${s.url}`)
-    .join("\n")}`;
   return {
-    finalOutputString,
+    finalGeneration: accumulatedMessage,
+    sources,
   };
 }
 
@@ -209,7 +212,7 @@ export async function e2eEval() {
   });
   const evalResult = await runOnDataset(chain, datasetName, {
     evaluationConfig: {
-      customEvaluators: [gradingFunction],
+      customEvaluators: [gradeFinalAnswer, gradeReturnedSources],
     },
   });
   console.log(
