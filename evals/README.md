@@ -126,3 +126,40 @@ These four data points are all weighted evenly, and averaged to generate the fin
 Once this eval completes, you can view the results inside the LangSmith dataset for the query analysis eval:
 
 **`<ADD SCREENSHOT HERE>`**
+
+
+retrieved docs
+dataset output
+
+qa:
+perform retrieval on generated query
+compare retrieved docs, vs dataset docs from dataset query
+
+compare results against other models
+
+manually update thumbs down outputs
+
+### Query Analysis Evaluation Process
+
+The evaluation process for query analysis is designed to assess the effectiveness of query analysis and retrieval mechanisms. It involves several key steps, outlined below:
+
+#### 1. Curate Dataset
+
+The dataset for query analysis is curated in two main parts:
+
+- **Initial Retrieval from LangSmith**: Filter conversations based on positive feedback (thumbs up) and a minimum of three messages within the conversation.
+- **Data Extraction**: From the filtered conversations, extract essential data including:
+  - **Chat History**: The sequence of messages leading up to the query.
+  - **Original Query**: The user's query that prompted the final generation.
+  - **Final Generation**: The system's response to the original query.
+
+This extracted data is then organized into a new LangSmith dataset. The dataset structure will have the chat history and original query as inputs, and the final generation as the output.
+
+#### 2. Run Evaluations
+
+With the curated dataset, the evaluation process can begin:
+
+- **Perform Query Analysis and Retrieval**: Using the inputs from the dataset (chat history and question), the system performs query analysis to generate a new query. This new query is then used to retrieve relevant documents.
+- **Evaluate Retrieved Documents**: An LLM is used to assess the relevance of the retrieved documents to the original query and the synthesized answer from the dataset. This evaluation determines the effectiveness of the query analysis and retrieval process.
+
+This structured approach ensures a comprehensive evaluation of the query analysis capabilities, focusing on the relevance and accuracy of the retrieval process in the context of the original user query and chat history.
