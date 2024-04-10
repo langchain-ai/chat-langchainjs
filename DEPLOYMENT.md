@@ -42,7 +42,7 @@ This will open a dropdown. From there select "Project".
 
 On the next screen, search for "chat-langchainjs" (if you did not modify the repo name when forking). Once shown, click "Import".
 
-Here you should _only_ modify the "Environment Variables" section. You should add the following environment variables:
+Here you should **only** modify the "Environment Variables" section. You should add the following environment variables:
 
 > If you have not setup LangSmith, head to the [LangSmith](./LANGSMITH.md) doc for instructions.
 
