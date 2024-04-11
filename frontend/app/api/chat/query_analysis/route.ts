@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ChatOpenAI } from "@langchain/openai";
 import { ChatFireworks } from "@langchain/community/chat_models/fireworks";
 import { createRephraseQuestionChain } from "./condense_question";
+import { ChatAnthropic } from "@langchain/anthropic";
 
 export const runtime = "edge";
 
@@ -23,10 +24,15 @@ export async function POST(req: NextRequest) {
         modelName: "accounts/fireworks/models/mixtral-8x7b-instruct",
         temperature: 0,
       });
+    } else if (config.configurable.llm === "anthropic_haiku") {
+      llm = new ChatAnthropic({
+        model: "claude-3-haiku-20240307",
+        temperature: 0,
+      });
     } else {
       throw new Error(
-        "Invalid LLM option passed. Must be 'openai' or 'mixtral'. Received: " +
-          config.configurable.llm,
+        "Invalid LLM option passed. Must be 'openai', 'mixtral' or 'anthropic. Received: " +
+          config.llm,
       );
     }
 

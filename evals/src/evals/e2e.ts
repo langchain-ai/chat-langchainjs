@@ -2,13 +2,13 @@
 
 import { RemoteRunnable } from "@langchain/core/runnables/remote";
 import { applyPatch } from "@langchain/core/utils/json_patch";
-import { ChatOpenAI } from "@langchain/openai";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { RunnableLambda } from "@langchain/core/runnables";
 import { BaseMessage } from "@langchain/core/messages";
 import { DynamicRunEvaluatorParams, runOnDataset } from "langchain/smith";
 import { EvaluationResult } from "langsmith/evaluation";
 import { z } from "zod";
+import { getLLM } from "./get_llm.js";
 
 type Source = {
   url: string;
@@ -38,23 +38,26 @@ async function gradeFinalAnswer(
   const { question } = props.run.inputs;
   const { finalGeneration: generatedAnswer } = props.run.outputs as APIResult;
   const { output: expectedOutput } = props.example.outputs;
-  const model = new ChatOpenAI({
-    modelName: "gpt-4-turbo-preview",
-    temperature: 0,
-  });
+
+  const modelEnv = process.env.EVAL_GRADING_MODEL;
+  if (!modelEnv) {
+    throw new Error("EVAL_GRADING_MODEL is not set");
+  }
+  const model = getLLM(modelEnv);
+
   const schema = z.object({
     answersQuestion: z
       .boolean()
       .describe(
         "Whether or not an answer is provided. Should be false if the answer is off topic."
       ),
-    isCorrect: z
-      .boolean()
-      .describe(
-        "Whether or not the answer is correct, in respect to the expected answer."
-      ),
+    accuracy: z
+      .enum(["full", "partial", "none"])
+      .describe("How accurate the answer is compared to the expected answer."),
   });
-  const modelWithTools = model.withStructuredOutput(schema, {
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const modelWithTools = (model as any).withStructuredOutput(schema, {
     name: "gradingFunction",
   });
   const prompt = ChatPromptTemplate.fromMessages([
@@ -63,8 +66,8 @@ async function gradeFinalAnswer(
       `You are an expert software engineer, tasked with grading the answer to a question.
 You should think through each part of the grading rubric carefully, and provide an answer you're confident in.
 Your rubric is as follows:
-- answersQuestion: Does the answer actually answer the question?
-- isCorrect: Is the answer correct? Use the expected answer as context to answer this.
+- answersQuestion: Whether or not the answer is provided. Should be false if the answer is off topic.
+- accuracy: How accurate the answer is compared to the expected answer.
 
 <Question>
 {question}
@@ -84,23 +87,36 @@ Your rubric is as follows:
     ],
   ]);
 
-  const chain = prompt.pipe(modelWithTools);
-  const { answersQuestion, isCorrect } = await chain.invoke({
+  const chain = prompt.pipe<z.infer<typeof schema>>(modelWithTools);
+  const { answersQuestion, accuracy } = await chain.invoke({
     question,
     expected_answer: expectedOutput,
     human_answer: generatedAnswer,
   });
 
   const answersQuestionValue = answersQuestion ? 1 : 0;
-  const isCorrectValue = isCorrect ? 1 : 0;
-  const score = (answersQuestionValue + isCorrectValue) / 2;
+  let accuracyScore = 0;
+  switch (accuracy) {
+    case "full":
+      accuracyScore = 1;
+      break;
+    case "partial":
+      accuracyScore = 0.5;
+      break;
+    case "none":
+      accuracyScore = 0;
+      break;
+    default:
+      throw new Error(`Unexpected accuracy value: ${accuracy}`);
+  }
+  const score = (answersQuestionValue + accuracyScore) / 2;
 
   return {
     key: "End 2 End",
     score,
     value: {
       answers_question: answersQuestion,
-      is_correct: isCorrect,
+      accuracy,
     },
   };
 }
@@ -132,15 +148,18 @@ async function processExample(input: {
   question: string;
   chat_history: Array<BaseMessage>;
 }): Promise<APIResult> {
-  const baseApiUrl = process.env.CHAT_LANGCHAINJS_API_URL;
+  const baseApiUrl = process.env.BASE_API_URL;
   if (!baseApiUrl) {
-    throw new Error("CHAT_LANGCHAINJS_API_URL is not set");
+    throw new Error("BASE_API_URL is not set");
   }
   const streamLogApiUrl = new URL(baseApiUrl);
   streamLogApiUrl.pathname = "/api";
   const streamLogUrl = streamLogApiUrl.toString();
 
-  const llm = "openai_gpt_3_5_turbo";
+  const llm = process.env.API_EVAL_MODEL;
+  if (!llm) {
+    throw new Error("API_EVAL_MODEL is not set");
+  }
 
   const sourceStepName = "FindDocs";
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -210,7 +229,14 @@ export async function e2eEval() {
   const chain = new RunnableLambda({
     func: processExample,
   });
+  const projectName = `e2e_eval_${new Date().toISOString()}`;
+  const projectMetadata = {
+    judge_llm: process.env.EVAL_GRADING_MODEL,
+    condense_query_llm: process.env.API_EVAL_MODEL,
+  };
   const evalResult = await runOnDataset(chain, datasetName, {
+    projectName,
+    projectMetadata,
     evaluationConfig: {
       customEvaluators: [gradeFinalAnswer, gradeReturnedSources],
     },

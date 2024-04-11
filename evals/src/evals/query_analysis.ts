@@ -1,7 +1,7 @@
 /* eslint-disable no-process-env */
 
 import { RunnableLambda } from "@langchain/core/runnables";
-import { ChatOpenAI, OpenAIEmbeddings } from "@langchain/openai";
+import { OpenAIEmbeddings } from "@langchain/openai";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { DynamicRunEvaluatorParams, runOnDataset } from "langchain/smith";
 import { EvaluationResult } from "langsmith/evaluation";
@@ -9,6 +9,16 @@ import { z } from "zod";
 import weaviate, { ApiKey } from "weaviate-ts-client";
 import { WeaviateStore } from "@langchain/weaviate";
 import { DocumentInterface } from "@langchain/core/documents";
+import { getLLM } from "./get_llm.js";
+
+type EvalChainResult = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  documents: DocumentInterface<Record<string, any>>[];
+};
+type EvalChainInput = {
+  question: string;
+  chat_history: string;
+};
 
 const documentsToString = (
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -22,8 +32,10 @@ const documentsToString = (
     .join("\n\n");
 
 /**
- * Grading function for query analysis. Given an original query, and a predicted
- * query along with chat history, grade the predicted query.
+ * Grading function for query analysis. Given an original user query, chat history leading
+ * up to that query, and the answer from that conversation turn, grade the relevance and
+ * accuracy of the documents returned from a semantic search query.
+ *
  * @param {DynamicRunEvaluatorParams} params The params used to grade the query analysis.
  * @returns {Promise<EvaluationResult>} The result of the grading function
  */
@@ -39,10 +51,13 @@ async function gradingFunction(
   const { question, chat_history } = props.example.inputs;
   const { synthesized_answer } = props.example.outputs;
   const { documents } = props.run.outputs;
-  const model = new ChatOpenAI({
-    modelName: "gpt-4-turbo-preview",
-    temperature: 0,
-  });
+
+  const modelEnv = process.env.EVAL_GRADING_MODEL;
+  if (!modelEnv) {
+    throw new Error("EVAL_GRADING_MODEL is not set");
+  }
+  const model = getLLM(modelEnv);
+
   const schema = z.object({
     relevant: z
       .boolean()
@@ -54,7 +69,8 @@ async function gradingFunction(
       .describe("The accuracy of the documents returned."),
   });
 
-  const modelWithTools = model.withStructuredOutput(schema, {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const modelWithTools = (model as any).withStructuredOutput(schema, {
     name: "gradingFunction",
   });
   const prompt = ChatPromptTemplate.fromMessages([
@@ -95,13 +111,14 @@ The following context is provided:
     ],
   ]);
 
-  const chain = prompt.pipe(modelWithTools);
+  const chain = prompt.pipe<z.infer<typeof schema>>(modelWithTools);
   const { relevant, accuracy } = await chain.invoke({
     original_query: question,
     chat_history,
     synthesized_answer,
     documents: documentsToString(documents),
   });
+
   // Convert all booleans to scores
   const relevantScore = relevant ? 1 : 0;
   let accuracyScore = 0;
@@ -120,7 +137,7 @@ The following context is provided:
   }
   // Calculate the score
   const score = (relevantScore + accuracyScore) / 2;
-  console.log("Finished grading query.");
+
   return {
     key: "query_analysis",
     score,
@@ -131,19 +148,25 @@ The following context is provided:
   };
 }
 
-async function generateQueries(input: {
-  question: string;
-  chat_history: string;
-}) {
-  const baseApiUrl = process.env.CHAT_LANGCHAINJS_API_URL;
+/**
+ * Generate a condensed query using the input question and chat history.
+ *
+ * @param {EvalChainInput} input The question and chat history to generate a condensed query for.
+ * @returns {Promise<{ rephrasedQuery: string; }>} The rephrased query.
+ */
+async function generateCondensedQuery(input: EvalChainInput) {
+  const baseApiUrl = process.env.BASE_API_URL;
   if (!baseApiUrl) {
-    throw new Error("CHAT_LANGCHAINJS_API_URL is not set");
+    throw new Error("BASE_API_URL is not set");
   }
   const queryAnalysisApiUrl = new URL(baseApiUrl);
   queryAnalysisApiUrl.pathname = "/api/chat/query_analysis";
   const queryAnalysisUrl = queryAnalysisApiUrl.toString();
 
-  const llm = "openai_gpt_3_5_turbo";
+  const llm = process.env.API_EVAL_MODEL;
+  if (!llm) {
+    throw new Error("API_EVAL_MODEL is not set");
+  }
 
   const res = await fetch(queryAnalysisUrl, {
     method: "POST",
@@ -169,20 +192,18 @@ async function generateQueries(input: {
   };
 }
 
-type RetrieveDocumentsResult = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  documents: DocumentInterface<Record<string, any>>[];
-};
-
 /**
- * Define a func which will call the QA function to generate yo!
+ * Function which condenses a question, and performs a semantic search
+ * using the condensed question to retrieve relevant documents.
+ *
+ * @param {RetrieveDocumentsInput} input The input to the eval chain. Consists of a question and chat history.
+ * @returns {Promise<EvalChainResult>} The result of the eval chain. Consists of an array of documents returned from the retriever.
  */
-async function retrieveDocuments(input: {
-  question: string;
-  chat_history: string;
-}): Promise<RetrieveDocumentsResult> {
+async function retrieveDocuments(
+  input: EvalChainInput
+): Promise<EvalChainResult> {
   const [{ rephrasedQuery }, retriever] = await Promise.all([
-    generateQueries(input),
+    generateCondensedQuery(input),
     getRetriever(),
   ]);
   const documents = await retriever.invoke(rephrasedQuery);
@@ -231,8 +252,8 @@ export async function queryAnalysisEval() {
   });
   const projectName = `query_analysis_eval_${new Date().toISOString()}`;
   const projectMetadata = {
-    judge_llm: "gpt-4-turbo-preview",
-    condense_query_llm: "openai_gpt_3_5_turbo",
+    judge_llm: process.env.EVAL_GRADING_MODEL,
+    condense_query_llm: process.env.API_EVAL_MODEL,
   };
   const evalResult = await runOnDataset(chain, datasetName, {
     projectName,

@@ -27,7 +27,11 @@ import { Select, Link } from "@chakra-ui/react";
 import { Source } from "./SourceBubble";
 import { apiBaseUrl } from "../utils/constants";
 
-const MODEL_TYPES = ["openai_gpt_3_5_turbo", "fireworks_mixtral"];
+const MODEL_TYPES = [
+  "openai_gpt_3_5_turbo",
+  "fireworks_mixtral",
+  "anthropic_haiku",
+];
 
 const defaultLlmValue =
   MODEL_TYPES[Math.floor(Math.random() * MODEL_TYPES.length)];
@@ -41,9 +45,7 @@ export function ChatWindow(props: { conversationId: string }) {
   const [messages, setMessages] = useState<Array<Message>>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [llm, setLlm] = useState(
-    searchParams.get("llm") ?? "openai_gpt_3_5_turbo",
-  );
+  const [llm, setLlm] = useState("openai_gpt_3_5_turbo");
   const [llmIsLoading, setLlmIsLoading] = useState(true);
   useEffect(() => {
     setLlm(searchParams.get("llm") ?? defaultLlmValue);
@@ -250,6 +252,7 @@ export function ChatWindow(props: { conversationId: string }) {
                 width={"240px"}
               >
                 <option value="openai_gpt_3_5_turbo">GPT-3.5-Turbo</option>
+                <option value="anthropic_haiku">Claude 3 Haiku</option>
                 <option value="fireworks_mixtral">
                   Mixtral (via Fireworks.ai)
                 </option>

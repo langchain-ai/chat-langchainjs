@@ -20,6 +20,7 @@ import {
 } from "@langchain/core/prompts";
 import weaviate, { ApiKey } from "weaviate-ts-client";
 import { WeaviateStore } from "@langchain/weaviate";
+import { ChatAnthropic } from "@langchain/anthropic";
 
 import { createRephraseQuestionChain } from "../query_analysis/condense_question";
 
@@ -206,9 +207,14 @@ export async function POST(req: NextRequest) {
         modelName: "accounts/fireworks/models/mixtral-8x7b-instruct",
         temperature: 0,
       });
+    } else if (config.configurable.llm === "anthropic_haiku") {
+      llm = new ChatAnthropic({
+        model: "claude-3-haiku-20240307",
+        temperature: 0,
+      });
     } else {
       throw new Error(
-        "Invalid LLM option passed. Must be 'openai' or 'mixtral'. Received: " +
+        "Invalid LLM option passed. Must be 'openai', 'mixtral' or 'anthropic. Received: " +
           config.llm,
       );
     }

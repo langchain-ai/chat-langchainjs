@@ -61,7 +61,7 @@ Then start the server:
 yarn start
 ```
 
-If you're running evals against a locally running server, you should set the `CHAT_LANGCHAINJS_API_URL` environment variable to `http://localhost:3000` in your `.env` file.
+If you're running evals against a locally running server, you should set the `BASE_API_URL` environment variable to `http://localhost:3000` in your `.env` file.
 
 Next, you can run the evals using the following commands:
 
@@ -77,7 +77,7 @@ These two files will run three evaluations total. The first two run inside the `
 
 ### E2E Eval
 
-This file first calls the API via the `CHAT_LANGCHAINJS_API_URL` environment URL. It calls this API route for every example you have in your dataset, and returns a data structure that contains the following:
+This file first calls the API via the `BASE_API_URL` environment URL. It calls this API route for every example you have in your dataset, and returns a data structure that contains the following:
 
 ```typescript
 type Source = {

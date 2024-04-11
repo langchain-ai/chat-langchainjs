@@ -29,6 +29,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@anthropic-ai/sdk@npm:^0.20.1":
+  version: 0.20.4
+  resolution: "@anthropic-ai/sdk@npm:0.20.4"
+  dependencies:
+    "@types/node": ^18.11.18
+    "@types/node-fetch": ^2.6.4
+    abort-controller: ^3.0.0
+    agentkeepalive: ^4.2.1
+    form-data-encoder: 1.7.2
+    formdata-node: ^4.3.2
+    node-fetch: ^2.6.7
+    web-streams-polyfill: ^3.2.1
+  checksum: e8dd021ab3a9a4321aad7be7fc89c3a1ec79234b0d7cbe91d045c07a9ff7033b0add2577f4b0b4bdce1dd0b5621bb4bcb2b1e98870b7dce614a342e3f245d931
+  languageName: node
+  linkType: hard
+
 "@anthropic-ai/sdk@npm:^0.9.1":
   version: 0.9.1
   resolution: "@anthropic-ai/sdk@npm:0.9.1"
@@ -1659,7 +1675,7 @@ __metadata:
   dependencies:
     "@jest/globals": ^29.5.0
     "@langchain/community": ^0.0.27
-    "@langchain/core": ^0.1.52
+    "@langchain/core": ^0.1.56
     "@langchain/openai": ^0.0.25
     "@langchain/scripts": ~0.0
     "@langchain/weaviate": ^0.0.1
@@ -1699,8 +1715,9 @@ __metadata:
   dependencies:
     "@chat-langchainjs/frontend": "workspace:*"
     "@jest/globals": ^29.5.0
+    "@langchain/anthropic": ^0.1.14
     "@langchain/community": ^0.0.27
-    "@langchain/core": ^0.1.52
+    "@langchain/core": ^0.1.56
     "@langchain/openai": ^0.0.25
     "@langchain/scripts": ~0.0
     "@langchain/weaviate": ^0.0.1
@@ -1742,8 +1759,9 @@ __metadata:
     "@chakra-ui/react": ^2.8.1
     "@emotion/react": ^11.11.1
     "@emotion/styled": ^11.11.0
+    "@langchain/anthropic": ^0.1.14
     "@langchain/community": ^0.0.27
-    "@langchain/core": ^0.1.52
+    "@langchain/core": ^0.1.56
     "@langchain/openai": ^0.0.25
     "@langchain/weaviate": ^0.0.1
     "@types/dompurify": ^3.0.5
@@ -2650,6 +2668,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@langchain/anthropic@npm:0.1.14":
+  version: 0.1.14
+  resolution: "@langchain/anthropic@npm:0.1.14"
+  dependencies:
+    "@anthropic-ai/sdk": ^0.20.1
+    "@langchain/core": ~0.1.56
+    fast-xml-parser: ^4.3.5
+    zod: ^3.22.4
+    zod-to-json-schema: ^3.22.4
+  checksum: 0fd8d8ba67f46d53f858f76ff67413d1d78e56bc9cb819e05057bc06f1114657336bf3ffedc3e869d2008165f104ffd903f483826d772906f0939f2a2b507fff
+  languageName: node
+  linkType: hard
+
 "@langchain/community@npm:0.0.27":
   version: 0.0.27
   resolution: "@langchain/community@npm:0.0.27"
@@ -2918,9 +2949,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@langchain/core@npm:0.1.52":
-  version: 0.1.52
-  resolution: "@langchain/core@npm:0.1.52"
+"@langchain/core@npm:0.1.56":
+  version: 0.1.56
+  resolution: "@langchain/core@npm:0.1.56"
   dependencies:
     ansi-styles: ^5.0.0
     camelcase: 6
@@ -2933,7 +2964,7 @@ __metadata:
     uuid: ^9.0.0
     zod: ^3.22.4
     zod-to-json-schema: ^3.22.3
-  checksum: 7111d92e7fb818478556e3a4b35e53529b4d620169e4aad59bea89ba7d8b1efc2aa76eb3be6b01ff13b5f2589ec779af161553b79a563a14f59490862e06bca7
+  checksum: 3f0254473f4b85597a341f88f09c0628b474a8dc9f46324339256803b07cbf79672c7df816f50cdabd062e4832751412d49852b8004bd97fd47c891e9c395140
   languageName: node
   linkType: hard
 
@@ -6850,6 +6881,17 @@ __metadata:
   version: 2.0.6
   resolution: "fast-levenshtein@npm:2.0.6"
   checksum: 92cfec0a8dfafd9c7a15fba8f2cc29cd0b62b85f056d99ce448bbcd9f708e18ab2764bda4dd5158364f4145a7c72788538994f0d1787b956ef0d1062b0f7c24c
+  languageName: node
+  linkType: hard
+
+"fast-xml-parser@npm:^4.3.5":
+  version: 4.3.6
+  resolution: "fast-xml-parser@npm:4.3.6"
+  dependencies:
+    strnum: ^1.0.5
+  bin:
+    fxparser: src/cli/cli.js
+  checksum: 12795c55f4564699c3cee13f7e892423244ac1125775e9b85bf948a1d4b65352da8f688d334bad530972288bb7ee0cf3d2605088d475123fce40d95003f045fa
   languageName: node
   linkType: hard
 
@@ -12219,6 +12261,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"strnum@npm:^1.0.5":
+  version: 1.0.5
+  resolution: "strnum@npm:1.0.5"
+  checksum: 651b2031db5da1bf4a77fdd2f116a8ac8055157c5420f5569f64879133825915ad461513e7202a16d7fec63c54fd822410d0962f8ca12385c4334891b9ae6dd2
+  languageName: node
+  linkType: hard
+
 "styled-jsx@npm:5.1.1":
   version: 5.1.1
   resolution: "styled-jsx@npm:5.1.1"
@@ -12830,7 +12879,7 @@ __metadata:
 
 "typescript@patch:typescript@5.1.6#~builtin<compat/typescript>, typescript@patch:typescript@<5.2.0#~builtin<compat/typescript>, typescript@patch:typescript@~5.1.6#~builtin<compat/typescript>":
   version: 5.1.6
-  resolution: "typescript@patch:typescript@npm%3A5.1.6#~builtin<compat/typescript>::version=5.1.6&hash=77c9e2"
+  resolution: "typescript@patch:typescript@npm%3A5.1.6#~builtin<compat/typescript>::version=5.1.6&hash=1f5320"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
@@ -12840,7 +12889,7 @@ __metadata:
 
 "typescript@patch:typescript@^5.2.2#~builtin<compat/typescript>":
   version: 5.4.5
-  resolution: "typescript@patch:typescript@npm%3A5.4.5#~builtin<compat/typescript>::version=5.4.5&hash=77c9e2"
+  resolution: "typescript@patch:typescript@npm%3A5.4.5#~builtin<compat/typescript>::version=5.4.5&hash=1f5320"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
@@ -13501,7 +13550,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zod-to-json-schema@npm:^3.22.3":
+"zod-to-json-schema@npm:^3.22.3, zod-to-json-schema@npm:^3.22.4":
   version: 3.22.5
   resolution: "zod-to-json-schema@npm:3.22.5"
   peerDependencies:
