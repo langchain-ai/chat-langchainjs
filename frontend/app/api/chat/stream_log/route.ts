@@ -18,10 +18,10 @@ import {
   ChatPromptTemplate,
   MessagesPlaceholder,
 } from "@langchain/core/prompts";
-
 import weaviate, { ApiKey } from "weaviate-ts-client";
 import { WeaviateStore } from "@langchain/weaviate";
-import { createRephraseQuestionChain } from "../query_analysis/route";
+
+import { createRephraseQuestionChain } from "../query_analysis/condense_question";
 
 export const runtime = "edge";
 

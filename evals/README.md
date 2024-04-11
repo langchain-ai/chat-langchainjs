@@ -149,11 +149,34 @@ The dataset for query analysis is curated in two main parts:
 
 - **Initial Retrieval from LangSmith**: Filter conversations based on positive feedback (thumbs up) and a minimum of three messages within the conversation.
 - **Data Extraction**: From the filtered conversations, extract essential data including:
-  - **Chat History**: The sequence of messages leading up to the query.
+  - **Chat History**: The conversation history leading up to the query.
   - **Original Query**: The user's query that prompted the final generation.
+  - **Condensed Query**: The system's compressed query based on the chat history and original query.
+  - **Retrieved Documents**: The documents which were retrieved based on the condensed query.
   - **Final Generation**: The system's response to the original query.
 
-This extracted data is then organized into a new LangSmith dataset. The dataset structure will have the chat history and original query as inputs, and the final generation as the output.
+This extracted data is then organized into a new LangSmith dataset. The dataset structure looks like this:
+
+```json
+{
+  "inputs": {
+    "question": "string",
+    "chat_history": "string",
+    "documents": [
+      {
+        "page_content": "string",
+        "metadata": {
+          "any": "object"
+        }
+      }
+    ],
+  },
+  "outputs": {
+    "condensed_question": "string",
+    "synthesized_answer": "string"
+  },
+}
+```
 
 #### 2. Run Evaluations
 

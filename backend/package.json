@@ -1,5 +1,5 @@
 {
-  "name": "backend",
+  "name": "@chat-langchainjs/backend",
   "version": "0.0.0",
   "description": "Backend for Chat LangChainJS",
   "type": "module",
@@ -30,7 +30,7 @@
   "dependencies": {
     "@langchain/community": "^0.0.27",
     "@langchain/core": "^0.1.52",
-    "@langchain/openai": "^0.0.14",
+    "@langchain/openai": "^0.0.25",
     "@langchain/weaviate": "^0.0.1",
     "cheerio": "^1.0.0-rc.12",
     "jsdom": "^24.0.0",

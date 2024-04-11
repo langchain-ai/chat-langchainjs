@@ -1,17 +1,31 @@
 /* eslint-disable no-process-env */
 
 import { RunnableLambda } from "@langchain/core/runnables";
-import { ChatOpenAI } from "@langchain/openai";
+import { ChatOpenAI, OpenAIEmbeddings } from "@langchain/openai";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { DynamicRunEvaluatorParams, runOnDataset } from "langchain/smith";
 import { EvaluationResult } from "langsmith/evaluation";
 import { z } from "zod";
+import weaviate, { ApiKey } from "weaviate-ts-client";
+import { WeaviateStore } from "@langchain/weaviate";
+import { DocumentInterface } from "@langchain/core/documents";
+
+const documentsToString = (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  documents: DocumentInterface<Record<string, any>>[]
+): string =>
+  documents
+    .map(
+      (doc, idx) =>
+        `<Document id={${idx}}>\nTitle: ${doc.metadata.title}\nContent:${doc.pageContent}\n</Document>`
+    )
+    .join("\n\n");
 
 /**
  * Grading function for query analysis. Given an original query, and a predicted
  * query along with chat history, grade the predicted query.
- * @param {GradingFunctionParams} params The params used to grade the query analysis.
- * @returns {Promise<GradingFunctionResult>} The result of the grading function
+ * @param {DynamicRunEvaluatorParams} params The params used to grade the query analysis.
+ * @returns {Promise<EvaluationResult>} The result of the grading function
  */
 async function gradingFunction(
   props: DynamicRunEvaluatorParams
@@ -22,9 +36,9 @@ async function gradingFunction(
   if (!props.example?.outputs) {
     throw new Error("No example outputs found");
   }
-  const { question, chat_history } = props.run.inputs;
-  const { output: expectedOutput } = props.example.outputs;
-  const { rephrasedQuery } = props.run.outputs;
+  const { question, chat_history } = props.example.inputs;
+  const { synthesized_answer } = props.example.outputs;
+  const { documents } = props.run.outputs;
   const model = new ChatOpenAI({
     modelName: "gpt-4-turbo-preview",
     temperature: 0,
@@ -33,23 +47,11 @@ async function gradingFunction(
     relevant: z
       .boolean()
       .describe(
-        "Whether or not the query is relevant to the chat history and original query."
+        "Whether or not the documents are relevant to the chat history and original query."
       ),
-    clear: z
-      .boolean()
-      .describe(
-        "Assess whether the generated query is clear, well-structured, and easy to understand."
-      ),
-    specific: z
-      .boolean()
-      .describe(
-        "Evaluate if the generated query is specific enough to elicit a targeted response or if it is too broad or vague."
-      ),
-    context_aware: z
-      .boolean()
-      .describe(
-        "Check if the generated query takes into account the context of the conversation and the user's chat history."
-      ),
+    accuracy: z
+      .enum(["full", "partial", "none"])
+      .describe("The accuracy of the documents returned."),
   });
 
   const modelWithTools = model.withStructuredOutput(schema, {
@@ -58,13 +60,19 @@ async function gradingFunction(
   const prompt = ChatPromptTemplate.fromMessages([
     [
       "system",
-      `You are an expert software engineer, tasked with grading a generated query, based on the users original query and chat history.
+      `You are an expert software engineer, tasked with grading documents returned from a semantic search query, against a user's original query and chat history.
 You should think through each part of the grading rubric carefully, and provide an answer you're confident in.
-Your rubric is as follows:
-- relevant: Whether or not the query is relevant to the chat history and original query.
-- clear: Assess whether the generated query is clear, well-structured, and easy to understand.
-- specific: Evaluate if the generated query is specific enough to elicit a targeted response or if it is too broad or vague.
-- context aware: Check if the generated query takes into account the context of the conversation and the user's chat history.
+
+You're provided with the following context:
+- Original Query: The user's original, unmodified question.
+- Chat History: The user's chat history leading up to the question.
+- Answer: A final answer to the question the user asked.
+
+The grading rubric is as follows:
+- Relevant: whether or not the documents are relevant and helpful to the user's original query/chat history
+- Accuracy: whether or not the user could accurately answer their question in full, using ONLY the documents returned.
+
+The following context is provided:
 
 <Original Query>
 {original_query}
@@ -74,51 +82,55 @@ Your rubric is as follows:
 {chat_history}
 </Chat History>
 
-Here is an example of a high scoring generated query:
-<High Scoring Query>
-{high_scoring_query}
-</High Scoring Query>`,
+<Answer>
+{synthesized_answer}
+</Answer>`,
     ],
     [
       "human",
-      `Here is the generated query:
-
-<Human Answer>
-{generated_question}
-</Human Answer>`,
+      `Here are the documents returned from the semantic search query:
+<Documents>
+{documents}
+</Documents>`,
     ],
   ]);
 
   const chain = prompt.pipe(modelWithTools);
-  const { relevant, clear, specific, context_aware } = await chain.invoke({
+  const { relevant, accuracy } = await chain.invoke({
     original_query: question,
     chat_history,
-    high_scoring_query: expectedOutput,
-    generated_question: rephrasedQuery,
+    synthesized_answer,
+    documents: documentsToString(documents),
   });
   // Convert all booleans to scores
   const relevantScore = relevant ? 1 : 0;
-  const clearScore = clear ? 1 : 0;
-  const specificScore = specific ? 1 : 0;
-  const contextAwareScore = context_aware ? 1 : 0;
+  let accuracyScore = 0;
+  switch (accuracy) {
+    case "full":
+      accuracyScore = 1;
+      break;
+    case "partial":
+      accuracyScore = 0.5;
+      break;
+    case "none":
+      accuracyScore = 0;
+      break;
+    default:
+      throw new Error(`Unexpected accuracy value: ${accuracy}`);
+  }
   // Calculate the score
-  const score =
-    (relevantScore + clearScore + specificScore + contextAwareScore) / 4;
+  const score = (relevantScore + accuracyScore) / 2;
+  console.log("Finished grading query.");
   return {
     key: "query_analysis",
     score,
     value: {
       relevant,
-      clear,
-      specific,
-      context_aware,
+      accuracy,
     },
   };
 }
 
-/**
- * Define a func which will call the QA function to generate yo!
- */
 async function generateQueries(input: {
   question: string;
   chat_history: string;
@@ -157,6 +169,57 @@ async function generateQueries(input: {
   };
 }
 
+type RetrieveDocumentsResult = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  documents: DocumentInterface<Record<string, any>>[];
+};
+
+/**
+ * Define a func which will call the QA function to generate yo!
+ */
+async function retrieveDocuments(input: {
+  question: string;
+  chat_history: string;
+}): Promise<RetrieveDocumentsResult> {
+  const [{ rephrasedQuery }, retriever] = await Promise.all([
+    generateQueries(input),
+    getRetriever(),
+  ]);
+  const documents = await retriever.invoke(rephrasedQuery);
+  return {
+    documents,
+  };
+}
+
+async function getRetriever() {
+  if (
+    !process.env.WEAVIATE_INDEX_NAME ||
+    !process.env.WEAVIATE_API_KEY ||
+    !process.env.WEAVIATE_URL
+  ) {
+    throw new Error(
+      "WEAVIATE_INDEX_NAME, WEAVIATE_API_KEY and WEAVIATE_URL environment variables must be set"
+    );
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const client = (weaviate as any).client({
+    scheme: "https",
+    host: process.env.WEAVIATE_URL,
+    apiKey: new ApiKey(process.env.WEAVIATE_API_KEY),
+  });
+  const vectorstore = await WeaviateStore.fromExistingIndex(
+    new OpenAIEmbeddings({}),
+    {
+      client,
+      indexName: process.env.WEAVIATE_INDEX_NAME,
+      textKey: "text",
+      metadataKeys: ["source", "title"],
+    }
+  );
+  return vectorstore.asRetriever({ k: 6 });
+}
+
 export async function queryAnalysisEval() {
   const datasetName = process.env.LANGSMITH_QA_DATASET_NAME;
   if (!datasetName) {
@@ -164,9 +227,16 @@ export async function queryAnalysisEval() {
   }
 
   const chain = new RunnableLambda({
-    func: generateQueries,
+    func: retrieveDocuments,
   });
+  const projectName = `query_analysis_eval_${new Date().toISOString()}`;
+  const projectMetadata = {
+    judge_llm: "gpt-4-turbo-preview",
+    condense_query_llm: "openai_gpt_3_5_turbo",
+  };
   const evalResult = await runOnDataset(chain, datasetName, {
+    projectName,
+    projectMetadata,
     evaluationConfig: {
       customEvaluators: [gradingFunction],
     },
