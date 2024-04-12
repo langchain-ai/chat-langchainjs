@@ -28,7 +28,6 @@ import { Source } from "./SourceBubble";
 import { apiBaseUrl } from "../utils/constants";
 
 const MODEL_TYPES = [
-  "anthropic_haiku",
   "openai_gpt_3_5_turbo",
   "fireworks_mixtral",
 ];
@@ -45,7 +44,7 @@ export function ChatWindow(props: { conversationId: string }) {
   const [messages, setMessages] = useState<Array<Message>>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [llm, setLlm] = useState("anthropic_haiku");
+  const [llm, setLlm] = useState("openai_gpt_3_5_turbo");
   const [llmIsLoading, setLlmIsLoading] = useState(true);
   useEffect(() => {
     setLlm(searchParams.get("llm") ?? defaultLlmValue);
@@ -108,7 +107,7 @@ export function ChatWindow(props: { conversationId: string }) {
           timeout: 60000,
         },
       });
-      const llmDisplayName = llm ?? "anthropic_haiku";
+      const llmDisplayName = llm ?? "openai_gpt_3_5_turbo";
       const streamLog = remoteChain.streamLog(
         {
           question: messageValue,
@@ -251,7 +250,6 @@ export function ChatWindow(props: { conversationId: string }) {
                 }}
                 width={"240px"}
               >
-                <option value="anthropic_haiku">Claude 3 Haiku</option>
                 <option value="openai_gpt_3_5_turbo">GPT-3.5-Turbo</option>
                 <option value="fireworks_mixtral">
                   Mixtral (via Fireworks.ai)

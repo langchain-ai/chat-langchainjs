@@ -129,18 +129,6 @@ Once this eval completes, you can view the results inside the LangSmith dataset 
 
 **`<ADD SCREENSHOT HERE>`**
 
-
-retrieved docs
-dataset output
-
-qa:
-perform retrieval on generated query
-compare retrieved docs, vs dataset docs from dataset query
-
-compare results against other models
-
-manually update thumbs down outputs
-
 ### Query Analysis Evaluation Process
 
 The evaluation process for query analysis is designed to assess the effectiveness of query analysis and retrieval mechanisms. It involves several key steps, outlined below:
