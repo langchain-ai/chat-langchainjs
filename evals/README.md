@@ -2,6 +2,8 @@
 
 This directory contains all the code around evaluating the Chat LangChainJS project.
 
+![Evals Diagram](../assets/images/Evals.png)
+
 It contains two main directories:
 
 - **`src/curate_datasets/`**: This directory contains two files, each containing code for curating eval datasets on entire single turn conversations. The other file contains code for curatign eval datasets for the query analysis (contextual-question compression) part of the main chat chain.
