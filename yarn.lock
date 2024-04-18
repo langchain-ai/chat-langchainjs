@@ -1737,7 +1737,7 @@ __metadata:
     eslint-plugin-prettier: ^4.2.1
     jest: ^29.5.0
     jest-environment-node: ^29.6.4
-    langchain: ^0.1.17
+    langchain: ^0.1.33
     langsmith: ^0.1.14
     ml-kmeans: ^6.0.0
     prettier: ^2.8.3
@@ -9084,7 +9084,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"langchain@npm:^0.1.17, langchain@npm:^0.1.4":
+"langchain@npm:^0.1.17, langchain@npm:^0.1.33, langchain@npm:^0.1.4":
   version: 0.1.33
   resolution: "langchain@npm:0.1.33"
   dependencies:

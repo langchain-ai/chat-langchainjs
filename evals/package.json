@@ -35,7 +35,7 @@
     "@langchain/core": "^0.1.56",
     "@langchain/openai": "^0.0.25",
     "@langchain/weaviate": "^0.0.1",
-    "langchain": "^0.1.17",
+    "langchain": "^0.1.33",
     "langsmith": "^0.1.14",
     "ml-kmeans": "^6.0.0",
     "weaviate-ts-client": "^2.0.0",
