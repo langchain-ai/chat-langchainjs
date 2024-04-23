@@ -47,7 +47,7 @@ Finally, perform these same steps inside the `stream_log` route, and you're done
 ## Record Manager
 
 Continuing with the database, we also employ a record manager for ingesting docs.
-Currently, we use a `PostgresRecordManager`, however you may also swap that out in favor of a `MongoDocumentManager`.
+Currently, we use a [`PostgresRecordManager`](https://api.js.langchain.com/classes/langchain_community_indexes_postgres.PostgresRecordManager.html), however you may also swap that out in favor of a [`SQLiteRecordManager`](https://api.js.langchain.com/classes/langchain_community_indexes_sqlite.SQLiteRecordManager.html).
 
 ```typescript
 const recordManager = new PostgresRecordManager(
