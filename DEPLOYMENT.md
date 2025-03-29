@@ -16,7 +16,7 @@ Once your cluster has been created you should see a few sections on the page. Th
 
 Next, click "API Keys" and save the API key in the environment variable `WEAVIATE_API_KEY`.
 
-The final Weaviate environment variable is "WEAVIATE_INDEX_NAME". This is the name of the index you want to use. You can name it whatever you want, but for this example, we'll use "langchain".
+The final Weaviate environment variable is "WEAVIATE_INDEX_NAME". This is the name of the index you want to use. You can name it whatever you want, it must be capitalized for the Weaviate internal schema, for this example, we'll use "Langchain".
 
 After this your vector store will be setup. We can now move onto the record manager.
 
@@ -42,7 +42,7 @@ This will open a dropdown. From there select "Project".
 
 On the next screen, search for "chat-langchainjs" (if you did not modify the repo name when forking). Once shown, click "Import".
 
-Here you should *only* modify the "Environment Variables" section. You should add the following environment variables:
+Here you should **only** modify the "Environment Variables" section. You should add the following environment variables:
 
 > If you have not setup LangSmith, head to the [LangSmith](./LANGSMITH.md) doc for instructions.
 
@@ -52,9 +52,10 @@ LANGCHAIN_ENDPOINT="https://api.smith.langchain.com"
 LANGCHAIN_API_KEY=YOUR_API_KEY
 LANGCHAIN_PROJECT=YOUR_PROJECT
 
+NEXT_PUBLIC_VERCEL_URL=YOUR_VERCEL_DOMAIN_PUBLIC_URL
 WEAVIATE_API_KEY=YOUR_API_KEY
 WEAVIATE_URL=YOUR_WEAVIATE_URL
-WEAVIATE_INDEX_NAME=langchain
+WEAVIATE_INDEX_NAME=Langchain
 FORCE_UPDATE=true
 RECORD_MANAGER_DB_URL=YOUR_DB_URL
 OPENAI_API_KEY=YOUR_OPENAI_KEY
@@ -76,7 +77,7 @@ When configuring, click "Add secret" and add the following secrets:
 OPENAI_API_KEY=
 RECORD_MANAGER_DB_URL=
 WEAVIATE_API_KEY=
-WEAVIATE_INDEX_NAME=langchain
+WEAVIATE_INDEX_NAME=Langchain
 WEAVIATE_URL=
 ```
 
